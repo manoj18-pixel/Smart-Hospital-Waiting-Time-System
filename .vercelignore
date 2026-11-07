@@ -1,0 +1,16 @@
+# Keep the deployment bundle small and avoid uploading local state.
+.venv/
+venv/
+instance/
+tests/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+.env
+.git/
+.gitignore
+HOSPITAL_PROJECT_PLAN.md
+htmlcov/
+.coverage

@@ -132,6 +132,50 @@ flask --app run.py run
 
 Running `seed` more than once is safe. It reuses existing users/departments and tops up future slots.
 
+### Deploy to Vercel
+
+Vercel runs the app as a serverless function (`api/index.py`), so the local
+SQLite file cannot be used: its filesystem is read-only and ephemeral. Create a
+free hosted database first, for example [Neon](https://neon.tech) (PostgreSQL)
+or [Aiven](https://aiven.io) (MySQL), then:
+
+1. Push this repository to GitHub.
+2. In Vercel, choose **Add New → Project** and import the repository.
+3. Add these **Environment Variables** (Project → Settings → Environment
+   Variables) for Production, Preview and Development:
+
+   | Name | Value |
+   | --- | --- |
+   | `SECRET_KEY` | a long random string (`python -c "import secrets; print(secrets.token_hex(32))"`) |
+   | `FLASK_CONFIG` | `production` |
+   | `DATABASE_URL` | `postgresql://user:password@host/db?sslmode=require` or `mysql+pymysql://user:password@host/db` |
+   | `MAIL_SUPPRESS_SEND` | `true` (or configure real SMTP credentials) |
+
+4. Before the first request, create the tables and demo data **against the
+   hosted database** from your machine:
+
+   ```powershell
+   $env:SECRET_KEY = "any-temporary-value"
+   $env:FLASK_CONFIG = "production"
+   $env:DATABASE_URL = "postgresql://user:password@host/db?sslmode=require"
+   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   .\.venv\Scripts\python.exe -m flask --app run.py init-db
+   .\.venv\Scripts\python.exe -m flask --app run.py seed
+   ```
+
+5. Deploy. Vercel gives you a URL such as
+   `https://smart-hospital-waiting-time-system.vercel.app`.
+
+Notes:
+
+- `api/index.py` starts the app with the `production` config and Vercel loads
+  every other route through the rewrite in `vercel.json`.
+- The app refuses to boot in production without `SECRET_KEY` and
+  `DATABASE_URL`, so misconfiguration fails fast instead of silently falling
+  back to SQLite.
+- Demo credentials are the same as below; change the passwords before using a
+  public deployment.
+
 ---
 
 ## Demo credentials

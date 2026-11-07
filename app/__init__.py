@@ -46,12 +46,35 @@ def _sqlite_pragmas(dbapi_connection, _connection_record):
 
 def create_app(config_name=None, overrides=None):
     config_name = config_name or os.getenv("FLASK_CONFIG", "development")
+
+    # Serverless platforms (Vercel, Lambda, ...) have a read-only filesystem and
+    # no persistent disk, so SQLite cannot be used there. Fail loudly at boot
+    # instead of returning confusing 500s on the first request.
+    if config_name == "production":
+        missing = [
+            name
+            for name in ("SECRET_KEY", "DATABASE_URL")
+            if not (os.getenv(name) or "").strip()
+        ]
+        if missing:
+            raise RuntimeError(
+                "Missing required production environment variable(s): "
+                + ", ".join(missing)
+                + ". Set them in the Vercel dashboard (Project > Settings > "
+                "Environment Variables)."
+            )
+
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_by_name.get(config_name, config_by_name["development"]))
     if overrides:
         app.config.update(overrides)
 
-    os.makedirs(app.instance_path, exist_ok=True)
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError:
+        # Read-only filesystem on serverless hosts. Only the default SQLite
+        # database needs this directory, and production requires DATABASE_URL.
+        pass
     uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
     if uri.startswith("sqlite"):
         engine_options = dict(app.config.get("SQLALCHEMY_ENGINE_OPTIONS") or {})
