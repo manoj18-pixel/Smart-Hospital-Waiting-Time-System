@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Slot conflict — MediQueue{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 text-center">
+        <div class="stat-icon amber mx-auto" style="width:88px;height:88px;font-size:2rem;border-radius:26px;"><i class="fa-solid fa-arrows-rotate"></i></div>
+        <div class="display-4 fw-700 mt-3" style="font-family:var(--font-head);color:var(--ink-900);">409</div>
+        <h1 class="h3 mt-2">That slot was just taken</h1>
+        <p class="text-muted-2 mx-auto max-620">{{ message or 'Another patient booked this time slot a moment before you. No double booking was created — please pick another available slot.' }}</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+          <a class="btn btn-primary" href="{{ url_for('patient.departments') }}"><i class="fa-solid fa-calendar-plus me-2"></i>Choose another slot</a>
+          <a class="btn btn-outline-primary" href="{{ url_for('main.index') }}">Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block footer %}{% endblock %}

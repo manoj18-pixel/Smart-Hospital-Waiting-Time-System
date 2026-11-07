@@ -1,0 +1,98 @@
+{% extends "layouts/dashboard.html" %}
+{% block title %}Dr. {{ doctor.name }} — MediQueue{% endblock %}
+{% block dashboard_title %}Doctor profile{% endblock %}
+{% block page_title %}Dr. {{ doctor.name }}{% endblock %}
+{% block page_subtitle %}{{ doctor.specialization }} · {{ doctor.department.name }}{% endblock %}
+
+{% block dashboard_content %}
+  <div class="mb-4"><a class="btn btn-sm btn-ghost" href="{{ url_for('patient.doctors', department_id=doctor.department_id) }}"><i class="fa-solid fa-arrow-left me-1"></i>Back to {{ doctor.department.name }}</a></div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card-custom overflow-hidden">
+        <div class="doctor-photo-wrap" style="height:300px;">
+          {% if doctor.photo_url %}
+            <img src="{{ doctor.photo_url }}" alt="Portrait of Dr. {{ doctor.name }}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">
+            <div class="avatar-fallback" style="display:none;">{{ doctor.initials }}</div>
+          {% else %}
+            <div class="avatar-fallback">{{ doctor.initials }}</div>
+          {% endif %}
+          <span class="doctor-badge"><i class="fa-solid fa-circle-check me-1"></i>{{ doctor.experience_years }} years experience</span>
+        </div>
+        <div class="card-body-custom">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div>
+              <h2 class="h5 mb-1">Dr. {{ doctor.name }}</h2>
+              <div class="doctor-spec">{{ doctor.specialization }}</div>
+            </div>
+            <span class="badge-soft green">₹{{ '%.0f'|format(doctor.consultation_fee) }}</span>
+          </div>
+          <hr class="soft-divider">
+          <div class="fs-14 d-flex flex-column gap-2">
+            <div><i class="fa-solid fa-graduation-cap me-2 text-blue"></i>{{ doctor.qualification or 'MBBS, MD' }}</div>
+            <div><i class="fa-solid fa-building me-2 text-blue"></i>{{ doctor.department.name }}{% if doctor.room_no %} · Room {{ doctor.room_no }}{% endif %}</div>
+            <div><i class="fa-solid fa-clock me-2 text-blue"></i>Avg. consultation: {{ doctor.avg_consult_minutes }} min</div>
+            <div><i class="fa-solid fa-notes-medical me-2 text-blue"></i>Registration verified</div>
+          </div>
+          <a class="btn btn-primary w-100 mt-4" href="{{ url_for('patient.book', doctor_id=doctor.id) }}"><i class="fa-solid fa-calendar-plus me-2"></i>Book an appointment</a>
+          <div class="fs-13 text-muted-2 text-center mt-2"><i class="fa-solid fa-lock me-1"></i>Your selected slot is locked instantly</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card-custom mb-4">
+        <div class="card-head"><h3><i class="fa-solid fa-user-doctor me-2 text-blue"></i>About the doctor</h3></div>
+        <div class="card-body-custom">
+          <p class="fs-14 text-muted-2">{{ doctor.bio or 'Dr. ' ~ doctor.name ~ ' is a ' ~ doctor.specialization ~ ' specialist with ' ~ doctor.experience_years ~ ' years of clinical experience. They focus on clear communication, evidence-based care and helping every patient understand their treatment plan.' }}</p>
+          <div class="row g-3 mt-1">
+            <div class="col-sm-4"><div class="p-3 rounded-4" style="background:var(--blue-50);"><div class="meta-label">Experience</div><div class="fw-700 text-ink">{{ doctor.experience_years }} years</div></div></div>
+            <div class="col-sm-4"><div class="p-3 rounded-4" style="background:var(--green-100);"><div class="meta-label">Consultation</div><div class="fw-700 text-ink">₹{{ '%.0f'|format(doctor.consultation_fee) }}</div></div></div>
+            <div class="col-sm-4"><div class="p-3 rounded-4" style="background:var(--amber-100);"><div class="meta-label">Avg. time</div><div class="fw-700 text-ink">{{ doctor.avg_consult_minutes }} min</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card-custom h-100">
+            <div class="card-head"><h3><i class="fa-regular fa-clock me-2 text-blue"></i>Weekly schedule</h3></div>
+            <div class="card-body-custom">
+              {% if schedules %}
+                <div class="d-flex flex-column gap-2">
+                  {% for schedule in schedules %}
+                    <div class="d-flex justify-content-between align-items-center fs-14 p-2 rounded-3" style="background:var(--blue-50);">
+                      <span class="fw-600 text-ink">{{ schedule.weekday_name }}</span>
+                      <span class="text-muted-2">{{ schedule.start_time|time12 }} – {{ schedule.end_time|time12 }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="fs-14 text-muted-2 mb-0">No weekly schedule has been published yet. Please contact reception.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card-custom h-100">
+            <div class="card-head"><h3><i class="fa-regular fa-calendar-check me-2 text-blue"></i>Next available dates</h3></div>
+            <div class="card-body-custom">
+              {% if availability %}
+                <div class="d-flex flex-column gap-2">
+                  {% for option in availability[:6] %}
+                    <a class="d-flex justify-content-between align-items-center fs-14 p-2 rounded-3 text-decoration-none" style="background:var(--green-100);color:var(--green-700);" href="{{ url_for('patient.book', doctor_id=doctor.id, date=option.date.isoformat()) }}">
+                      <span class="fw-600">{{ option.date|date_label }}</span>
+                      <span>{{ option.available }} slots <i class="fa-solid fa-arrow-right ms-1"></i></span>
+                    </a>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="fs-14 text-muted-2 mb-0">No open slots in the next two weeks. Please check back or choose another doctor.</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

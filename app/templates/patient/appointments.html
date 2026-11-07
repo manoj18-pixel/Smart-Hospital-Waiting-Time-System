@@ -1,0 +1,72 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import status_badge, empty_state %}
+{% block title %}My appointments — MediQueue{% endblock %}
+{% block dashboard_title %}My appointments{% endblock %}
+{% block page_title %}My appointments{% endblock %}
+{% block page_subtitle %}View, manage and cancel your hospital visits.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+    <div class="d-flex flex-wrap gap-1 p-1 rounded-4" style="background:#fff;border:1px solid var(--ink-100);">
+      {% for key, label in [('upcoming', 'Upcoming'), ('past', 'Past'), ('cancelled', 'Cancelled'), ('all', 'All')] %}
+        <a class="btn btn-sm {{ 'btn-primary' if scope == key else 'btn-ghost border-0' }}" href="{{ url_for('patient.appointments', scope=key) }}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('patient.departments') }}"><i class="fa-solid fa-calendar-plus me-1"></i>Book new appointment</a>
+  </div>
+
+  {% if appointments %}
+    <div class="d-flex flex-column gap-3">
+      {% for appointment in appointments %}
+        <div class="card-custom card-hover">
+          <div class="card-body-custom">
+            <div class="row align-items-center g-3">
+              <div class="col-md-5">
+                <div class="d-flex align-items-center gap-3">
+                  <span class="nav-avatar">{{ appointment.doctor.initials }}</span>
+                  <div class="min-w-0">
+                    <div class="fw-600 text-ink">Dr. {{ appointment.doctor.name }}</div>
+                    <div class="fs-13 text-muted-2 text-truncate">{{ appointment.doctor.specialization }} · {{ appointment.doctor.department.name }}</div>
+                    <div class="fs-13 text-muted-2 mt-1"><span class="meta-label">ID</span> {{ appointment.booking_id }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="meta-label">Date &amp; time</div>
+                <div class="fw-600 fs-14 text-ink">{{ appointment.appointment_date|date_label }}</div>
+                <div class="fs-13 text-muted-2">{{ appointment.start_time|time12 }} – {{ appointment.end_time|time12 }}</div>
+              </div>
+              <div class="col-6 col-md-2">
+                <div class="meta-label mb-1">Status</div>
+                {{ status_badge(appointment.status) }}
+              </div>
+              <div class="col-md-2 text-md-end">
+                <a class="btn btn-sm btn-outline-primary w-100 w-md-auto" href="{{ url_for('patient.appointment_detail', booking_id=appointment.booking_id) }}">Details</a>
+                {% if appointment.is_active and appointment.cancellable(cutoff) %}
+                  <div class="fs-13 text-muted-2 mt-1">Cancellable</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card-custom">
+      {% if scope == 'upcoming' %}
+        {{ empty_state('fa-calendar-plus', 'No upcoming appointments', 'Find a doctor and lock a slot that fits your day.', url_for('patient.departments'), 'Find a doctor') }}
+      {% elif scope == 'past' %}
+        {{ empty_state('fa-clock-rotate-left', 'No past appointments', 'Completed and missed visits will appear here.') }}
+      {% elif scope == 'cancelled' %}
+        {{ empty_state('fa-calendar-xmark', 'No cancelled appointments', 'Good news — you have not cancelled any visits.') }}
+      {% else %}
+        {{ empty_state('fa-calendar', 'No appointments yet', 'Book your first appointment with one of our specialists.', url_for('patient.departments'), 'Find a doctor') }}
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="alert alert-info mt-4 fs-13">
+    <i class="fa-solid fa-circle-info me-1"></i>
+    Cancellations are allowed up to <strong>{{ cutoff }} hours</strong> before the appointment. Repeated late cancellations may be limited.
+  </div>
+{% endblock %}

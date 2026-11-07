@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<body style="margin:0;padding:0;background:#f5f9ff;font-family:Inter,Segoe UI,Arial,sans-serif;color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f9ff;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:26px 30px;color:#ffffff;">
+              <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.78;">{{ hospital_name }}</div>
+              <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;color:#ffffff;">Appointment cancelled</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 30px 8px;">
+              <p style="margin:0 0 14px;font-size:15px;">Hello {{ patient.full_name }},</p>
+              <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">
+                Your appointment with <strong>Dr. {{ doctor.name }}</strong> has been cancelled
+                {% if extra.cancelled_by == 'hospital' %}by the hospital{% else %}at your request{% endif %}.
+                The time slot has been released and is now available to other patients.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f8ff;border-radius:12px;margin:0 0 18px;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Booking ID</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:700;color:#0b4f9e;">{{ appointment.booking_id }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Original date</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ date_label }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Original time</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ time_label }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Department</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ doctor.department.name }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Reason</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ appointment.cancel_reason or 'Not specified' }}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 10px;font-size:14px;line-height:1.7;color:#475569;">
+                You can book a new appointment at any time from your MediQueue dashboard. If you did not request this cancellation, please contact the appointment desk immediately.
+              </p>
+              <p style="margin:0 0 22px;font-size:13px;line-height:1.7;color:#64748b;">
+                Appointment desk: +91 80 4567 8900 · appointments@mediqueue.local
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 30px 24px;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">This is an automated message from {{ hospital_name }}. Please do not reply to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

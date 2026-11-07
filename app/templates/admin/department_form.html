@@ -1,0 +1,45 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/forms.html" import field, textarea, checkbox, errors_summary %}
+{% block title %}{{ 'Edit' if department else 'New' }} department — MediQueue{% endblock %}
+{% block dashboard_title %}Departments{% endblock %}
+{% block page_title %}{{ 'Edit department' if department else 'New department' }}{% endblock %}
+{% block page_subtitle %}{{ department.name if department else 'Add a speciality to the hospital directory.' }}{% endblock %}
+
+{% block dashboard_content %}
+  <div class="mb-4">
+    <a class="btn btn-sm btn-ghost" href="{{ url_for('admin.departments') }}"><i class="fa-solid fa-arrow-left me-1"></i>Back to departments</a>
+  </div>
+
+  <div class="card-custom form-card">
+    <div class="card-head">
+      <h3>{{ 'Department details' if department else 'Department information' }}</h3>
+      {% if department %}<span class="badge-soft {{ 'green' if department.is_active else 'red' }}">{{ 'Active' if department.is_active else 'Inactive' }}</span>{% endif %}
+    </div>
+    <div class="card-body-custom">
+      {{ errors_summary(form) }}
+      <form method="post" novalidate data-loading>
+        {{ form.hidden_tag() }}
+        <div class="row g-3">
+          <div class="col-md-8">
+            {{ field(form.name, icon='fa-hospital', placeholder='e.g. Cardiology') }}
+          </div>
+          <div class="col-md-4">
+            {{ field(form.icon, icon='fa-icons', placeholder='fa-heart-pulse', help='Font Awesome icon name') }}
+          </div>
+          <div class="col-12">
+            {{ textarea(form.description, rows=3, placeholder='Short description shown to patients…') }}
+          </div>
+          <div class="col-md-4">{{ field(form.floor, icon='fa-stairs', placeholder='e.g. 3rd floor') }}</div>
+          <div class="col-md-4">{{ field(form.phone_ext, icon='fa-phone', placeholder='e.g. 214') }}</div>
+          <div class="col-md-4">{{ field(form.image_url, icon='fa-image', placeholder='Optional image URL') }}</div>
+          <div class="col-12">{{ checkbox(form.is_active, 'Department is active and visible to patients') }}</div>
+        </div>
+        <hr class="soft-divider my-4">
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk me-2"></i>{{ 'Save changes' if department else 'Create department' }}</button>
+          <a class="btn btn-ghost" href="{{ url_for('admin.departments') }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import status_badge %}
+{% block title %}Booking confirmed — MediQueue{% endblock %}
+{% block dashboard_title %}Booking confirmed{% endblock %}
+{% block page_title %}Your appointment is confirmed{% endblock %}
+{% block page_subtitle %}A confirmation email has been sent to {{ appointment.patient.email }}.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="card-custom overflow-hidden mb-4">
+    <div class="confirm-hero">
+      <div class="check-circle"><i class="fa-solid fa-check"></i></div>
+      <h1>All set, {{ appointment.patient.first_name }}!</h1>
+      <p class="mb-3">Your slot is locked in our system. Please arrive 10 minutes early.</p>
+      <div class="copy-chip">
+        <span>Booking ID: {{ appointment.booking_id }}</span>
+        <button type="button" data-copy="{{ appointment.booking_id }}" aria-label="Copy booking ID"><i class="fa-regular fa-copy"></i></button>
+      </div>
+    </div>
+
+    <div class="px-4 pb-4">
+      <div class="detail-grid">
+        <div class="detail-cell">
+          <div class="k">Doctor</div>
+          <div class="v">Dr. {{ appointment.doctor.name }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Department</div>
+          <div class="v">{{ appointment.doctor.department.name }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Date</div>
+          <div class="v">{{ appointment.appointment_date|date_label }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Time</div>
+          <div class="v">{{ appointment.start_time|time12 }} – {{ appointment.end_time|time12 }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Room</div>
+          <div class="v">{{ appointment.doctor.room_no or 'To be assigned' }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Consultation fee</div>
+          <div class="v">₹{{ '%.0f'|format(appointment.fee) }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Status</div>
+          <div class="v">{{ status_badge(appointment.status) }}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="k">Patient</div>
+          <div class="v">{{ appointment.patient.full_name }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="wait-panel h-100">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="stat-icon green m-0"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div>
+            <div class="meta-label">Estimated waiting time</div>
+            <div class="big">{{ wait_label }}</div>
+          </div>
+        </div>
+        <div class="row g-3 mt-2">
+          <div class="col-sm-4">
+            <div class="meta-label">Queue position</div>
+            <div class="fw-700 text-ink fs-15">{{ estimate.queue_position }}</div>
+          </div>
+          <div class="col-sm-4">
+            <div class="meta-label">Patients ahead</div>
+            <div class="fw-700 text-ink fs-15">{{ estimate.patients_ahead }}</div>
+          </div>
+          <div class="col-sm-4">
+            <div class="meta-label">Doctor delay</div>
+            <div class="fw-700 text-ink fs-15">{{ estimate.delay_minutes }} min</div>
+          </div>
+        </div>
+        <p class="fs-13 text-muted-2 mb-0 mt-3">
+          <i class="fa-solid fa-circle-info me-1"></i>
+          Estimate = patients ahead × {{ estimate.avg_consult_minutes }} min average consultation, plus any running delay. It updates automatically as the queue moves.
+        </p>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card-custom card-pad h-100">
+        <h3 class="h6 mb-2">What happens next?</h3>
+        <div class="timeline mt-3">
+          <div class="timeline-item"><span class="timeline-dot green"></span><div class="fw-600 fs-14 text-ink">Check your email</div><div class="fs-13 text-muted-2">Your confirmation contains the booking ID and visit details.</div></div>
+          <div class="timeline-item"><span class="timeline-dot"></span><div class="fw-600 fs-14 text-ink">Arrive 10 minutes early</div><div class="fs-13 text-muted-2">Show your booking ID at the reception of {{ appointment.doctor.department.name }}.</div></div>
+          <div class="timeline-item"><span class="timeline-dot green"></span><div class="fw-600 fs-14 text-ink">Track your wait</div><div class="fs-13 text-muted-2">Open this appointment on the day to see live queue updates.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    <a class="btn btn-primary" href="{{ url_for('patient.appointment_detail', booking_id=appointment.booking_id) }}"><i class="fa-regular fa-calendar-check me-2"></i>Manage appointment</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('patient.appointments') }}">All my appointments</a>
+    <a class="btn btn-ghost" href="{{ url_for('patient.departments') }}">Book another visit</a>
+  </div>
+{% endblock %}

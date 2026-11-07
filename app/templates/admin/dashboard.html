@@ -1,0 +1,168 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import stat_card, status_badge, empty_state %}
+{% block title %}Admin dashboard — MediQueue{% endblock %}
+{% block dashboard_title %}Admin dashboard{% endblock %}
+{% block page_title %}Hospital overview{% endblock %}
+{% block page_subtitle %}Live appointment activity, slot utilisation and department load.{% endblock %}
+
+{% block dashboard_content %}
+  {% set k = payload.kpis %}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">{{ stat_card('fa-users', k.total_patients, 'Registered patients', 'blue') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-user-doctor', k.total_doctors, 'Active doctors', 'green') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-calendar-check', k.appointments_today, "Today's appointments", 'amber', hint=k.booked_slots_today ~ ' booked slots today') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-clock', k.available_slots_today, 'Free slots today', 'blue', hint=k.cancellation_rate ~ '% cancellation rate') }}</div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="chart-card">
+        <h2><i class="fa-solid fa-chart-line me-2 text-blue"></i>Bookings over the last 7 days</h2>
+        <div class="chart-sub">Number of appointments created per day.</div>
+        <div class="chart-wrap"><canvas id="bookingsChart" aria-label="Bookings per day chart" role="img"></canvas></div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="chart-card">
+        <h2><i class="fa-solid fa-chart-pie me-2 text-blue"></i>Slot utilisation</h2>
+        <div class="chart-sub">Booked vs available slots, next 7 days.</div>
+        <div class="chart-wrap"><canvas id="utilChart" aria-label="Slot utilisation chart" role="img"></canvas></div>
+        <div class="d-flex justify-content-between fs-13 mt-2">
+          <span class="text-muted-2">Booked <strong class="text-ink">{{ payload.slot_utilization.booked }}</strong></span>
+          <span class="text-muted-2">Available <strong class="text-ink">{{ payload.slot_utilization.available }}</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="chart-card">
+        <h2><i class="fa-solid fa-building me-2 text-blue"></i>Department load</h2>
+        <div class="chart-sub">Appointments by department, all time.</div>
+        <div class="chart-wrap"><canvas id="deptChart" aria-label="Department load chart" role="img"></canvas></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="chart-card">
+        <h2><i class="fa-solid fa-clock me-2 text-blue"></i>Peak booking hours</h2>
+        <div class="chart-sub">When patients book most often.</div>
+        <div class="chart-wrap"><canvas id="hoursChart" aria-label="Peak hours chart" role="img"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-custom">
+    <div class="card-head">
+      <h3><i class="fa-regular fa-calendar me-2 text-blue"></i>Today's appointments</h3>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.appointments') }}">Manage all</a>
+    </div>
+    {% if today_appointments %}
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Department</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for appointment in today_appointments %}
+              <tr>
+                <td data-label="Time"><strong class="fs-14">{{ appointment.start_time|time12 }}</strong></td>
+                <td data-label="Patient">
+                  <div class="fw-600 fs-14">{{ appointment.patient.full_name }}</div>
+                  <div class="fs-13 text-muted-2">{{ appointment.booking_id }}</div>
+                </td>
+                <td data-label="Doctor">Dr. {{ appointment.doctor.name }}</td>
+                <td data-label="Department">{{ appointment.doctor.department.name }}</td>
+                <td data-label="Status">{{ status_badge(appointment.status) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {{ empty_state('fa-calendar-xmark', 'No appointments today', 'Bookings will appear here as patients reserve slots.', url_for('admin.appointments'), 'View all appointments') }}
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  (function () {
+    if (!window.Chart) return;
+    Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+    Chart.defaults.color = "#64748b";
+    const blue = "#0d6efd", green = "#16a34a", palette = ["#0d6efd", "#16a34a", "#f59e0b", "#dc2626", "#3b82f6", "#22c55e", "#8b5cf6", "#0ea5e9"];
+
+    new Chart(document.getElementById("bookingsChart"), {
+      type: "line",
+      data: {
+        labels: {{ payload.bookings_per_day['labels']|tojson }},
+        datasets: [{
+          label: "Appointments",
+          data: {{ payload.bookings_per_day['values']|tojson }},
+          borderColor: blue,
+          backgroundColor: "rgba(13,110,253,.10)",
+          fill: true,
+          tension: .35,
+          pointRadius: 4,
+          pointBackgroundColor: "#fff",
+          pointBorderColor: blue,
+          pointBorderWidth: 2,
+          borderWidth: 2.5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(148,163,184,.15)" } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("utilChart"), {
+      type: "doughnut",
+      data: {
+        labels: {{ payload.slot_utilization['labels']|tojson }},
+        datasets: [{ data: {{ payload.slot_utilization['values']|tojson }}, backgroundColor: [blue, "#22c55e"], borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: "66%",
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true } } }
+      }
+    });
+
+    new Chart(document.getElementById("deptChart"), {
+      type: "bar",
+      data: {
+        labels: {{ payload.department_load['labels']|tojson }},
+        datasets: [{ label: "Appointments", data: {{ payload.department_load['values']|tojson }}, backgroundColor: palette, borderRadius: 8, maxBarThickness: 38 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(148,163,184,.15)" } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("hoursChart"), {
+      type: "bar",
+      data: {
+        labels: {{ payload.peak_hours['labels']|tojson }},
+        datasets: [{ label: "Bookings", data: {{ payload.peak_hours['values']|tojson }}, backgroundColor: green, borderRadius: 8, maxBarThickness: 30 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(148,163,184,.15)" } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}

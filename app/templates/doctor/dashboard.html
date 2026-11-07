@@ -1,0 +1,135 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import stat_card, status_badge, empty_state %}
+{% block title %}Doctor dashboard — MediQueue{% endblock %}
+{% block dashboard_title %}Doctor dashboard{% endblock %}
+{% block page_title %}Good day, Dr. {{ current_user.full_name }}{% endblock %}
+{% block page_subtitle %}{{ day_label }} · {{ doctor.department.name }} · {{ doctor.specialization }}{% endblock %}
+
+{% block dashboard_content %}
+  <div class="dash-hero mb-4">
+    <div class="row align-items-center g-4 position-relative" style="z-index:2;">
+      <div class="col-lg-7">
+        <span class="badge-soft" style="background:rgba(255,255,255,.14);color:#fff;"><i class="fa-solid fa-user-doctor me-1"></i>Today's clinic</span>
+        <h2 class="mt-3">{{ stats.waiting }} patient{{ '' if stats.waiting == 1 else 's' }} waiting · {{ stats.completed }} completed</h2>
+        <p>Keep the queue moving by checking patients in and completing consultations. Waiting-time estimates update for every patient automatically.</p>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          <a class="btn btn-white btn-sm" href="{{ url_for('doctor.schedule', date=day.isoformat()) }}"><i class="fa-regular fa-calendar-days me-1"></i>Open daily schedule</a>
+          <span class="badge-soft" style="background:rgba(255,255,255,.14);color:#fff;"><i class="fa-solid fa-clock me-1"></i>Running delay: {{ delay }} min</span>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="hero-appt">
+          <div class="label">Currently with</div>
+          {% if current %}
+            <div class="value">{{ current.patient.full_name }}</div>
+            <div class="sub">{{ current.start_time|time12 }} · {{ current.booking_id }}</div>
+            <a class="btn btn-white btn-sm w-100 mt-3" href="{{ url_for('doctor.schedule', date=day.isoformat()) }}"><i class="fa-solid fa-check me-1"></i>Complete consultation</a>
+          {% else %}
+            <div class="value">No active consultation</div>
+            <div class="sub mb-3">Check in the next patient when they arrive.</div>
+            {% if next_patient %}
+              <div class="fs-14 text-white"><i class="fa-regular fa-clock me-1"></i>Next: {{ next_patient.patient.full_name }} at {{ next_patient.start_time|time12 }}</div>
+            {% else %}
+              <div class="fs-13" style="color:rgba(255,255,255,.7);">No more patients scheduled today.</div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">{{ stat_card('fa-users', stats.total, "Today's appointments", 'blue') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-hourglass-half', stats.waiting, 'Waiting / checked in', 'amber') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-circle-check', stats.completed, 'Completed', 'green') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-user-slash', stats.no_show, 'No-shows', 'red') }}</div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card-custom">
+        <div class="card-head">
+          <h3><i class="fa-solid fa-list-check me-2 text-blue"></i>Today's queue</h3>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('doctor.schedule', date=day.isoformat()) }}">Full schedule</a>
+        </div>
+        <div class="card-body-custom">
+          {% if queue %}
+            <div class="queue-list">
+              {% for appointment in queue %}
+                <div class="queue-item {% if appointment.status == 'IN_CONSULTATION' or appointment.id == (current.id if current else none) %}is-current{% elif appointment.status == 'COMPLETED' %}is-complete{% endif %}">
+                  <div class="queue-slot">{{ appointment.start_time|time12 }}<small>{{ appointment.end_time|time12 }}</small></div>
+                  <div class="queue-patient">
+                    <span class="nav-avatar">{{ appointment.patient.initials }}</span>
+                    <div class="min-w-0">
+                      <strong>{{ appointment.patient.full_name }}</strong>
+                      <span>{{ appointment.booking_id }} · {{ appointment.patient.phone or 'No phone' }}</span>
+                    </div>
+                  </div>
+                  <div class="queue-meta">
+                    <div>{{ status_badge(appointment.status) }}</div>
+                    {% set wait = waits.get(appointment.id) %}
+                    {% if wait and appointment.is_active %}
+                      {% set wait_label = humanize_minutes(wait.estimated_wait_minutes) %}
+                      <div class="mt-1"><i class="fa-regular fa-hourglass-half me-1"></i>{{ wait_label }}{{ '' if wait_label == 'No wait' else ' wait' }} · pos {{ wait.queue_position }}</div>
+                    {% endif %}
+                    {% if appointment.reason_for_visit %}<div class="mt-1 text-truncate" style="max-width:260px;"><i class="fa-solid fa-notes-medical me-1"></i>{{ appointment.reason_for_visit }}</div>{% endif %}
+                  </div>
+                  <div class="queue-actions">
+                    {% if appointment.status == 'CONFIRMED' %}
+                      <form method="post" action="{{ url_for('doctor.checkin', appointment_id=appointment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fa-solid fa-user-check me-1"></i>Check in</button>
+                      </form>
+                    {% elif appointment.status in ['CHECKED_IN', 'IN_CONSULTATION'] %}
+                      <form method="post" action="{{ url_for('doctor.complete', appointment_id=appointment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-success" type="submit"><i class="fa-solid fa-check me-1"></i>Complete</button>
+                      </form>
+                    {% endif %}
+                    {% if appointment.status in ['CONFIRMED', 'CHECKED_IN'] %}
+                      <form method="post" action="{{ url_for('doctor.no_show', appointment_id=appointment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-ghost" type="submit" title="Mark no-show"><i class="fa-solid fa-user-slash"></i></button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            {{ empty_state('fa-calendar-check', 'No patients booked today', 'Your queue is clear. Enjoy the breather — new bookings will show up here.') }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card-custom mb-4">
+        <div class="card-head"><h3><i class="fa-solid fa-clock me-2 text-blue"></i>Running late?</h3></div>
+        <div class="card-body-custom">
+          <p class="fs-13 text-muted-2">Add today's delay. Every waiting patient sees an updated estimate immediately.</p>
+          <form method="post" action="{{ url_for('doctor.set_delay') }}" data-loading>
+            {{ delay_form.hidden_tag() }}
+            <input type="hidden" name="date" value="{{ day.isoformat() }}">
+            <div class="mb-3">
+              {{ delay_form.delay_minutes.label(class="form-label") }}
+              {{ delay_form.delay_minutes(class="form-control" + (" is-invalid" if delay_form.delay_minutes.errors else ""), min="0", max="180") }}
+              {% for error in delay_form.delay_minutes.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            </div>
+            <button class="btn btn-primary w-100" type="submit"><i class="fa-solid fa-arrows-rotate me-1"></i>Update estimates</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card-custom card-pad">
+        <div class="meta-label mb-2">Your profile</div>
+        <div class="d-flex flex-column gap-2 fs-14">
+          <div><i class="fa-solid fa-building me-2 text-blue"></i>{{ doctor.department.name }}</div>
+          <div><i class="fa-solid fa-door-open me-2 text-blue"></i>Room {{ doctor.room_no or '—' }}</div>
+          <div><i class="fa-solid fa-clock me-2 text-blue"></i>Average {{ doctor.avg_consult_minutes }} min per patient</div>
+          <div><i class="fa-solid fa-indian-rupee-sign me-2 text-blue"></i>Fee ₹{{ '%.0f'|format(doctor.consultation_fee) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

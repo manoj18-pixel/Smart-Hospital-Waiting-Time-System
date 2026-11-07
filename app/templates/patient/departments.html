@@ -1,0 +1,55 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import dept_card, empty_state %}
+{% block title %}Departments — MediQueue{% endblock %}
+{% block dashboard_title %}Departments{% endblock %}
+{% block page_title %}Choose a department{% endblock %}
+{% block page_subtitle %}Select a speciality to see its doctors and available appointments.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="card-custom card-pad mb-4" style="background:linear-gradient(135deg,var(--blue-50),#fff);">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-7">
+        <h2 class="h5 mb-1">Find care for what you need</h2>
+        <p class="fs-14 text-muted-2 mb-0">Every department lists only active doctors with real, bookable slots.</p>
+      </div>
+      <div class="col-lg-5">
+        <div class="input-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input class="form-control" id="deptSearch" type="search" placeholder="Search departments…" aria-label="Search departments">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4" id="deptGrid">
+    {% for department in departments %}
+      <div class="col-sm-6 col-xl-4 dept-item" data-name="{{ department.name|lower }}">
+        {{ dept_card(department) }}
+      </div>
+    {% else %}
+      <div class="col-12">{{ empty_state('fa-hospital', 'No departments yet', 'The hospital administrator needs to add departments and doctors.', url_for('main.contact'), 'Contact support') }}</div>
+    {% endfor %}
+  </div>
+  <div class="alert alert-info mt-4 d-none" id="deptEmpty">No department matches your search.</div>
+{% endblock %}
+
+{% block dashboard_scripts %}{% endblock %}
+
+{% block scripts %}
+<script>
+  const search = document.getElementById("deptSearch");
+  if (search) {
+    search.addEventListener("input", function () {
+      const q = search.value.trim().toLowerCase();
+      let visible = 0;
+      document.querySelectorAll(".dept-item").forEach(function (item) {
+        const show = !q || item.getAttribute("data-name").includes(q);
+        item.classList.toggle("d-none", !show);
+        if (show) visible++;
+      });
+      const note = document.getElementById("deptEmpty");
+      if (note) note.classList.toggle("d-none", visible > 0);
+    });
+  }
+</script>
+{% endblock %}

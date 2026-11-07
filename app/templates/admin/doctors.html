@@ -1,0 +1,67 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import empty_state %}
+{% block title %}Doctors — Admin — MediQueue{% endblock %}
+{% block dashboard_title %}Doctors{% endblock %}
+{% block page_title %}Doctors{% endblock %}
+{% block page_subtitle %}Manage doctor accounts, departments, fees and schedules.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="admin-section-title">
+    <h2>All doctors <span class="badge-soft ms-1">{{ doctors|length }}</span></h2>
+    <a class="btn btn-primary" href="{{ url_for('admin.doctor_new') }}"><i class="fa-solid fa-user-plus me-1"></i>Add doctor</a>
+  </div>
+
+  {% if doctors %}
+    <div class="card-custom">
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead>
+            <tr><th>Doctor</th><th>Department</th><th>Fee</th><th>Avg. consult</th><th>Status</th><th class="text-end">Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for doctor in doctors %}
+              <tr>
+                <td data-label="Doctor">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="nav-avatar">{{ doctor.initials }}</span>
+                    <div>
+                      <div class="fw-600 fs-14 text-ink">Dr. {{ doctor.name }}</div>
+                      <div class="fs-13 text-muted-2">{{ doctor.specialization }} · {{ doctor.experience_years }} yrs</div>
+                      <div class="fs-13 text-muted-2">{{ doctor.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="Department">
+                  <div class="fs-14">{{ doctor.department.name }}</div>
+                  <div class="fs-13 text-muted-2">Room {{ doctor.room_no or '—' }}</div>
+                </td>
+                <td data-label="Fee"><strong class="fs-14">₹{{ '%.0f'|format(doctor.consultation_fee) }}</strong></td>
+                <td data-label="Avg. consult"><span class="badge-soft">{{ doctor.avg_consult_minutes }} min</span></td>
+                <td data-label="Status">
+                  {% if doctor.is_active and doctor.user.is_active %}<span class="badge-status completed"><i class="fa-solid fa-circle-check"></i>Active</span>
+                  {% else %}<span class="badge-status closed"><i class="fa-solid fa-circle"></i>Inactive</span>{% endif %}
+                </td>
+                <td data-label="Actions" class="text-end">
+                  <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.schedules', doctor_id=doctor.id) }}" title="Schedules"><i class="fa-regular fa-calendar-days"></i></a>
+                    <a class="btn btn-sm btn-ghost" href="{{ url_for('admin.doctor_edit', doctor_id=doctor.id) }}" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                    <form method="post" action="{{ url_for('admin.doctor_toggle', doctor_id=doctor.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn btn-sm btn-ghost" type="submit" title="{{ 'Deactivate' if doctor.is_active else 'Activate' }}">
+                        <i class="fa-solid {{ 'fa-toggle-on text-green' if doctor.is_active else 'fa-toggle-off' }}"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card-custom">
+      {{ empty_state('fa-user-doctor', 'No doctors yet', 'Add a doctor, then publish their weekly schedule to open bookable slots.', url_for('admin.doctor_new'), 'Add doctor') }}
+    </div>
+  {% endif %}
+{% endblock %}

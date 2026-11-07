@@ -1,0 +1,133 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import stat_card, status_badge, empty_state %}
+{% block title %}Patient dashboard — MediQueue{% endblock %}
+{% block dashboard_title %}Welcome back, {{ current_user.first_name }}{% endblock %}
+{% block page_subtitle %}Here is what is happening with your health visits.{% endblock %}
+{% block page_title %}Welcome back, {{ current_user.first_name }}{% endblock %}
+
+{% block dashboard_content %}
+  <div class="dash-hero mb-4">
+    <div class="row align-items-center g-4 position-relative" style="z-index:2;">
+      <div class="col-lg-7">
+        <span class="badge-soft" style="background:rgba(255,255,255,.14);color:#fff;"><i class="fa-solid fa-heart-pulse me-1"></i>Your care overview</span>
+        <h2 class="mt-3">{% if next_appointment %}Your next visit is confirmed.{% else %}Ready to book your next visit?{% endif %}</h2>
+        <p>{% if next_appointment %}Everything is set. Arrive 10 minutes early and check in at the reception desk.{% else %}Choose a department and doctor, then pick a slot that fits your day.{% endif %}</p>
+        {% if next_appointment %}
+          <div data-countdown="{{ next_appointment.starts_at.isoformat() }}"><div class="countdown"></div></div>
+        {% else %}
+          <a class="btn btn-white mt-2" href="{{ url_for('patient.departments') }}"><i class="fa-solid fa-calendar-plus me-2"></i>Book an appointment</a>
+        {% endif %}
+      </div>
+      <div class="col-lg-5">
+        {% if next_appointment %}
+          <div class="hero-appt">
+            <div class="label">Next appointment</div>
+            <div class="value">Dr. {{ next_appointment.doctor.name }}</div>
+            <div class="sub">{{ next_appointment.doctor.specialization }} · {{ next_appointment.doctor.department.name }}</div>
+            <hr style="border-color:rgba(255,255,255,.18);">
+            <div class="d-flex justify-content-between fs-14">
+              <span><i class="fa-regular fa-calendar me-1"></i>{{ next_appointment.appointment_date|date_label }}</span>
+              <span><i class="fa-regular fa-clock me-1"></i>{{ next_appointment.start_time|time12 }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 gap-2 flex-wrap">
+              <a class="btn btn-white btn-sm" href="{{ url_for('patient.appointment_detail', booking_id=next_appointment.booking_id) }}">View details</a>
+              {% if wait %}<span class="badge-soft green"><i class="fa-solid fa-hourglass-half me-1"></i>{{ humanize_minutes(wait.estimated_wait_minutes) }}</span>{% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="hero-appt text-center">
+            <div class="stat-icon mx-auto" style="background:rgba(255,255,255,.14);color:#fff;"><i class="fa-solid fa-calendar-plus"></i></div>
+            <div class="value mt-2">No upcoming visit</div>
+            <div class="sub mb-3">Book in under a minute</div>
+            <a class="btn btn-white btn-sm w-100" href="{{ url_for('patient.departments') }}">Find a doctor</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">{{ stat_card('fa-calendar-check', stats.upcoming, 'Upcoming visits', 'blue') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-circle-check', stats.completed, 'Completed', 'green') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-circle-xmark', stats.cancelled, 'Cancelled', 'red') }}</div>
+    <div class="col-6 col-lg-3">{{ stat_card('fa-notes-medical', stats.total, 'Total appointments', 'amber') }}</div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card-custom">
+        <div class="card-head">
+          <h3><i class="fa-regular fa-calendar-check me-2 text-blue"></i>Upcoming appointments</h3>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('patient.appointments') }}">View all</a>
+        </div>
+        {% if upcoming %}
+          <div class="table-responsive">
+            <table class="table table-modern align-middle">
+              <thead><tr><th>Doctor</th><th>Date &amp; time</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+              <tbody>
+                {% for appointment in upcoming %}
+                  <tr>
+                    <td data-label="Doctor">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="nav-avatar">{{ appointment.doctor.initials }}</span>
+                        <div><strong class="d-block fs-14">{{ appointment.doctor.name }}</strong><span class="fs-13 text-muted-2">{{ appointment.doctor.specialization }}</span></div>
+                      </div>
+                    </td>
+                    <td data-label="Date & time"><strong class="fs-14">{{ appointment.appointment_date|date_label }}</strong><span class="d-block fs-13 text-muted-2">{{ appointment.start_time|time12 }} · {{ appointment.doctor.department.name }}</span></td>
+                    <td data-label="Status">{{ status_badge(appointment.status) }}</td>
+                    <td data-label="Action" class="text-end"><a class="btn btn-sm btn-ghost" href="{{ url_for('patient.appointment_detail', booking_id=appointment.booking_id) }}">Manage</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          {{ empty_state('fa-calendar-plus', 'No upcoming appointments', 'Book a visit with one of our specialists and lock your slot instantly.', url_for('patient.departments'), 'Find a doctor') }}
+        {% endif %}
+      </div>
+
+      <div class="card-custom mt-4">
+        <div class="card-head"><h3><i class="fa-solid fa-bolt me-2 text-blue"></i>Quick actions</h3></div>
+        <div class="card-body-custom">
+          <div class="row g-3">
+            <div class="col-sm-6"><a class="quick-action" href="{{ url_for('patient.departments') }}"><span class="qa-icon"><i class="fa-solid fa-calendar-plus"></i></span><span><strong>Book appointment</strong><span>Choose department &amp; slot</span></span></a></div>
+            <div class="col-sm-6"><a class="quick-action" href="{{ url_for('patient.appointments') }}"><span class="qa-icon"><i class="fa-regular fa-calendar-check"></i></span><span><strong>My appointments</strong><span>View, manage or cancel</span></span></a></div>
+            <div class="col-sm-6"><a class="quick-action" href="{{ url_for('main.contact') }}"><span class="qa-icon"><i class="fa-solid fa-headset"></i></span><span><strong>Need help?</strong><span>Contact the hospital</span></span></a></div>
+            <div class="col-sm-6"><a class="quick-action" href="{{ url_for('main.about') }}"><span class="qa-icon"><i class="fa-solid fa-shield-heart"></i></span><span><strong>How it works</strong><span>Our care &amp; privacy promise</span></span></a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card-custom">
+        <div class="card-head"><h3><i class="fa-solid fa-clock-rotate-left me-2 text-blue"></i>Recent activity</h3></div>
+        <div class="card-body-custom">
+          {% if recent %}
+            <div class="timeline">
+              {% for appointment in recent %}
+                <div class="timeline-item">
+                  <span class="timeline-dot {{ 'red' if appointment.status == 'CANCELLED' else ('green' if appointment.status == 'COMPLETED' else '') }}"></span>
+                  <div class="fw-600 fs-14 text-ink">{{ appointment.doctor.name }}</div>
+                  <div class="fs-13 text-muted-2">{{ appointment.appointment_date|date_label }} · {{ appointment.start_time|time12 }}</div>
+                  <div class="mt-1">{{ status_badge(appointment.status) }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="fs-14 text-muted-2 mb-0">Your booking activity will appear here.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-custom mt-4 card-pad" style="background:linear-gradient(135deg,var(--green-100),#fff);border-color:rgba(22,163,74,.18);">
+        <div class="d-flex gap-3">
+          <div class="stat-icon green m-0" style="flex:0 0 auto;"><i class="fa-solid fa-hourglass-half"></i></div>
+          <div>
+            <h3 class="h6 mb-1">How is my wait calculated?</h3>
+            <p class="fs-13 text-muted-2 mb-0">Patients ahead of you × your doctor's average consultation time, plus any running delay. We refresh it as the queue moves.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import status_badge, empty_state %}
+{% block title %}Appointments — Admin — MediQueue{% endblock %}
+{% block dashboard_title %}Appointments{% endblock %}
+{% block page_title %}All appointments{% endblock %}
+{% block page_subtitle %}Search, filter and manage every appointment in the hospital.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="card-custom card-pad mb-4">
+    <form method="get" action="{{ url_for('admin.appointments') }}" class="filter-bar">
+      <input class="form-control" type="date" name="date" value="{{ filters.date }}" aria-label="Filter by date">
+      <select class="form-select" name="status" aria-label="Filter by status">
+        <option value="">Any status</option>
+        {% for status in AppointmentStatus.ALL %}
+          <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|replace('_', ' ')|title }}</option>
+        {% endfor %}
+      </select>
+      <select class="form-select" name="doctor_id" aria-label="Filter by doctor">
+        <option value="">Any doctor</option>
+        {% for doctor in doctors %}
+          <option value="{{ doctor.id }}" {% if filters.doctor_id == doctor.id|string %}selected{% endif %}>Dr. {{ doctor.name }} — {{ doctor.department.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="input-icon flex-grow-1" style="min-width:190px;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input class="form-control" type="search" name="q" value="{{ filters.q }}" placeholder="Booking ID…" aria-label="Search booking ID">
+      </div>
+      <button class="btn btn-primary" type="submit">Filter</button>
+      {% if filters.date or filters.status or filters.doctor_id or filters.q %}
+        <a class="btn btn-ghost" href="{{ url_for('admin.appointments') }}">Reset</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="admin-section-title">
+    <h2>Results <span class="badge-soft ms-1">{{ appointments|length }}</span></h2>
+    <span class="fs-13 text-muted-2">Showing the latest 200 matching appointments</span>
+  </div>
+
+  {% if appointments %}
+    <div class="card-custom">
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead>
+            <tr><th>Booking</th><th>Patient</th><th>Doctor</th><th>Date &amp; time</th><th>Status</th><th class="text-end">Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for appointment in appointments %}
+              <tr>
+                <td data-label="Booking">
+                  <div class="fw-600 fs-14">{{ appointment.booking_id }}</div>
+                  <div class="fs-13 text-muted-2">₹{{ '%.0f'|format(appointment.fee) }}</div>
+                </td>
+                <td data-label="Patient">
+                  <div class="fs-14 fw-600 text-ink">{{ appointment.patient.full_name }}</div>
+                  <div class="fs-13 text-muted-2">{{ appointment.patient.email }}</div>
+                </td>
+                <td data-label="Doctor">
+                  <div class="fs-14">Dr. {{ appointment.doctor.name }}</div>
+                  <div class="fs-13 text-muted-2">{{ appointment.doctor.department.name }}</div>
+                </td>
+                <td data-label="Date &amp; time">
+                  <div class="fs-14 fw-600 text-ink">{{ appointment.appointment_date|date_label }}</div>
+                  <div class="fs-13 text-muted-2">{{ appointment.start_time|time12 }} – {{ appointment.end_time|time12 }}</div>
+                </td>
+                <td data-label="Status">{{ status_badge(appointment.status) }}</td>
+                <td data-label="Actions" class="text-end">
+                  {% if appointment.is_active %}
+                    <button class="btn btn-sm btn-danger-soft" type="button"
+                            data-bs-toggle="modal" data-bs-target="#adminCancelModal"
+                            data-booking="{{ appointment.booking_id }}"
+                            data-patient="{{ appointment.patient.full_name }}"
+                            data-action="{{ url_for('admin.cancel_appointment', appointment_id=appointment.id) }}">
+                      <i class="fa-solid fa-calendar-xmark me-1"></i>Cancel
+                    </button>
+                  {% else %}
+                    <span class="fs-13 text-muted-2">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card-custom">
+      {{ empty_state('fa-calendar', 'No appointments match', 'Try widening the filters or clearing the search.', url_for('admin.appointments'), 'Reset filters') }}
+    </div>
+  {% endif %}
+
+  <div class="modal fade" id="adminCancelModal" tabindex="-1" aria-labelledby="adminCancelLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0" style="border-radius:var(--radius-md);">
+        <form method="post" action="#" id="adminCancelForm" data-loading>
+          {{ cancel_form.hidden_tag() }}
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title" id="adminCancelLabel"><i class="fa-solid fa-calendar-xmark me-2 text-danger-soft"></i>Cancel appointment</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="fs-14 text-muted-2">You are cancelling <strong id="adminCancelBooking">this booking</strong> for <strong id="adminCancelPatient">the patient</strong>. The slot will be released immediately.</p>
+            <div class="mb-2">
+              {{ cancel_form.reason.label(class="form-label") }}
+              {{ cancel_form.reason(class="form-control", rows="3", placeholder="Reason for cancellation (required)", maxlength="300") }}
+            </div>
+            <div class="alert alert-info mb-0 fs-13"><i class="fa-solid fa-circle-info me-1"></i>Administrator cancellations bypass the patient cutoff window and cancellation limit.</div>
+          </div>
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Keep</button>
+            <button type="submit" class="btn btn-danger-soft">Cancel appointment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const modal = document.getElementById("adminCancelModal");
+    if (!modal) return;
+    modal.addEventListener("show.bs.modal", function (event) {
+      const trigger = event.relatedTarget;
+      if (!trigger) return;
+      document.getElementById("adminCancelForm").setAttribute("action", trigger.getAttribute("data-action"));
+      document.getElementById("adminCancelBooking").textContent = trigger.getAttribute("data-booking");
+      document.getElementById("adminCancelPatient").textContent = trigger.getAttribute("data-patient");
+    });
+  })();
+</script>
+{% endblock %}

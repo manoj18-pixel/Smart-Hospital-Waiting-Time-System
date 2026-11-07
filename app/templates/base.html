@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MediQueue — Smart Hospital Waiting-Time System{% endblock %}</title>
+  <meta name="description" content="Book hospital appointments in seconds. MediQueue shows real doctor availability, locks your slot instantly and estimates your waiting time.">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/components.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/pages.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/responsive.css') }}" rel="stylesheet">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <nav class="navbar navbar-expand-lg site-nav sticky-top" id="siteNav">
+    <div class="container">
+      <a class="navbar-brand brand" href="{{ url_for('main.index') }}">
+        <span class="brand-mark"><i class="fa-solid fa-heart-pulse"></i></span>
+        <span>MediQueue<small>Smart hospital</small></span>
+      </a>
+      <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fa-solid fa-bars fs-5"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link nav-link-custom {% if request.endpoint == 'main.index' %}active{% endif %}" href="{{ url_for('main.index') }}">Home</a></li>
+          <li class="nav-item">
+            {% if not current_user.is_authenticated %}
+              {% set departments_href = url_for('auth.login', next=url_for('patient.departments')) %}
+            {% elif current_user.role == 'patient' %}
+              {% set departments_href = url_for('patient.departments') %}
+            {% elif current_user.role == 'admin' %}
+              {% set departments_href = url_for('admin.departments') %}
+            {% else %}
+              {% set departments_href = url_for('doctor.dashboard') %}
+            {% endif %}
+            <a class="nav-link nav-link-custom {% if request.endpoint and request.endpoint.startswith('patient.departments') %}active{% endif %}" href="{{ departments_href }}">Departments</a>
+          </li>
+          <li class="nav-item"><a class="nav-link nav-link-custom {% if request.endpoint == 'main.about' %}active{% endif %}" href="{{ url_for('main.about') }}">About</a></li>
+          <li class="nav-item"><a class="nav-link nav-link-custom {% if request.endpoint == 'main.contact' %}active{% endif %}" href="{{ url_for('main.contact') }}">Contact</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          {% if current_user.is_authenticated %}
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('patient.dashboard') if current_user.role == 'patient' else (url_for('doctor.dashboard') if current_user.role == 'doctor' else url_for('admin.dashboard')) }}">
+              <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
+            </a>
+            <div class="dropdown">
+              <button class="btn btn-sm d-flex align-items-center gap-2 border-0 bg-transparent p-1" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="nav-avatar">{{ current_user.initials }}</span>
+                <span class="d-none d-md-block text-start">
+                  <span class="d-block fs-13 fw-600 text-ink">{{ current_user.first_name }}</span>
+                  <span class="d-block" style="font-size:.65rem;color:var(--ink-600);text-transform:uppercase;letter-spacing:.06em;">{{ current_user.role }}</span>
+                </span>
+                <i class="fa-solid fa-chevron-down fs-13 text-muted"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li class="px-3 py-2">
+                  <div class="fw-600 fs-14 text-ink">{{ current_user.full_name }}</div>
+                  <div class="fs-13 text-muted-2">{{ current_user.email }}</div>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                {% if current_user.role == 'patient' %}
+                  <li><a class="dropdown-item" href="{{ url_for('patient.appointments') }}"><i class="fa-regular fa-calendar-check me-2"></i>My appointments</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('patient.departments') }}"><i class="fa-solid fa-stethoscope me-2"></i>Book appointment</a></li>
+                {% elif current_user.role == 'doctor' %}
+                  <li><a class="dropdown-item" href="{{ url_for('doctor.schedule') }}"><i class="fa-regular fa-calendar-days me-2"></i>Daily schedule</a></li>
+                {% else %}
+                  <li><a class="dropdown-item" href="{{ url_for('admin.doctors') }}"><i class="fa-solid fa-user-doctor me-2"></i>Manage doctors</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('admin.appointments') }}"><i class="fa-regular fa-calendar me-2"></i>All appointments</a></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{{ url_for('auth.logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="dropdown-item text-danger" type="submit"><i class="fa-solid fa-right-from-bracket me-2"></i>Sign out</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          {% else %}
+            <a class="btn btn-sm btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('auth.register') }}"><i class="fa-solid fa-calendar-plus me-1"></i> Book appointment</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        {% set cat = category if category in ['success', 'danger', 'warning', 'info'] else 'info' %}
+        <div class="toast toast-item {{ cat }}" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="true" data-delay="5000">
+          <div class="toast-body">
+            <i class="fa-solid {{ 'fa-circle-check' if cat == 'success' else ('fa-circle-exclamation' if cat == 'danger' else ('fa-triangle-exclamation' if cat == 'warning' else 'fa-circle-info')) }} mt-1"></i>
+            <span class="flex-grow-1">{{ message }}</span>
+            <button type="button" class="btn-close btn-close-sm ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="site-footer">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <a class="brand footer-brand mb-3" href="{{ url_for('main.index') }}">
+            <span class="brand-mark"><i class="fa-solid fa-heart-pulse"></i></span>
+            <span>MediQueue<small>Smart hospital</small></span>
+          </a>
+          <p class="fs-14 mt-3" style="max-width:340px;color:#9db0c8;">A modern hospital appointment and live queue platform. One doctor, one patient, one time slot — guaranteed.</p>
+          <div class="footer-badge mt-3"><i class="fa-solid fa-shield-heart"></i> Your health data stays private</div>
+        </div>
+        <div class="col-6 col-lg-2">
+          <h2 class="h5">Hospital</h2>
+          <a href="{{ url_for('main.index') }}">Home</a><br>
+          <a href="{{ url_for('main.about') }}">About us</a><br>
+          <a href="{{ url_for('main.contact') }}">Contact</a><br>
+          <a href="{{ url_for('patient.departments') }}">Departments</a>
+        </div>
+        <div class="col-6 col-lg-2">
+          <h2 class="h5">Patients</h2>
+          <a href="{{ url_for('auth.register') }}">Create account</a><br>
+          <a href="{{ url_for('auth.login') }}">Patient login</a><br>
+          <a href="{{ url_for('patient.appointments') }}">My appointments</a><br>
+          <a href="{{ url_for('main.index') }}#how-it-works">How it works</a>
+        </div>
+        <div class="col-lg-4">
+          <h2 class="h5">Emergency &amp; support</h2>
+          <p class="fs-14 mb-2"><i class="fa-solid fa-phone-volume me-2 text-green"></i> 24×7 Emergency: <strong class="text-white">108</strong></p>
+          <p class="fs-14 mb-2"><i class="fa-solid fa-location-dot me-2 text-green"></i> 12 Wellness Avenue, Medical District</p>
+          <p class="fs-14 mb-0"><i class="fa-regular fa-envelope me-2 text-green"></i> support@mediqueue.local</p>
+          <p class="fs-13 mt-3 mb-0" style="color:#8296b0;">OPD hours: Mon–Sat, 8:00 AM – 8:00 PM</p>
+        </div>
+      </div>
+      <div class="footer-note d-flex flex-wrap justify-content-between gap-2">
+        <span>© {{ current_year }} MediQueue. Built as a full-stack academic project.</span>
+        <span>Slot locking secured at the database layer.</span>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

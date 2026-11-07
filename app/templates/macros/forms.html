@@ -1,0 +1,50 @@
+{% macro field(f, icon=None, placeholder=None, autocomplete=None, help=None) %}
+  <div class="mb-3">
+    {{ f.label(class="form-label") }}
+    {% if icon %}
+      <div class="input-icon">
+        <i class="fa-solid {{ icon }}"></i>
+        {{ f(class="form-control" + (" is-invalid" if f.errors else ""), placeholder=placeholder or "", autocomplete=autocomplete or "off") }}
+      </div>
+    {% else %}
+      {{ f(class="form-control" + (" is-invalid" if f.errors else ""), placeholder=placeholder or "", autocomplete=autocomplete or "off") }}
+    {% endif %}
+    {% for error in f.errors %}
+      <div class="invalid-feedback d-block">{{ error }}</div>
+    {% endfor %}
+    {% if help %}<div class="form-text">{{ help }}</div>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro textarea(f, rows=3, placeholder=None) %}
+  <div class="mb-3">
+    {{ f.label(class="form-label") }}
+    {{ f(class="form-control" + (" is-invalid" if f.errors else ""), rows=rows, placeholder=placeholder or "") }}
+    {% for error in f.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro select(f, icon=None) %}
+  <div class="mb-3">
+    {{ f.label(class="form-label") }}
+    {{ f(class="form-select" + (" is-invalid" if f.errors else "")) }}
+    {% for error in f.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro checkbox(f, label=None) %}
+  <div class="form-check mb-3">
+    {{ f(class="form-check-input" + (" is-invalid" if f.errors else "")) }}
+    {{ f.label(class="form-check-label fs-14", text=label) if label else f.label(class="form-check-label fs-14") }}
+    {% for error in f.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro errors_summary(form) %}
+  {% if form.errors %}
+    <div class="alert alert-danger d-flex gap-2">
+      <i class="fa-solid fa-circle-exclamation mt-1"></i>
+      <div>Please correct the highlighted fields and try again.</div>
+    </div>
+  {% endif %}
+{% endmacro %}

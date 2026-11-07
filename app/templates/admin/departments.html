@@ -1,0 +1,64 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import empty_state %}
+{% block title %}Departments — Admin — MediQueue{% endblock %}
+{% block dashboard_title %}Departments{% endblock %}
+{% block page_title %}Departments{% endblock %}
+{% block page_subtitle %}Create and manage hospital departments shown to patients.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="admin-section-title">
+    <h2>All departments <span class="badge-soft ms-1">{{ departments|length }}</span></h2>
+    <a class="btn btn-primary" href="{{ url_for('admin.department_new') }}"><i class="fa-solid fa-plus me-1"></i>New department</a>
+  </div>
+
+  {% if departments %}
+    <div class="card-custom">
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead>
+            <tr><th>Department</th><th>Floor / Ext.</th><th>Doctors</th><th>Status</th><th class="text-end">Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for department in departments %}
+              <tr>
+                <td data-label="Department">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="dept-icon m-0" style="width:40px;height:40px;font-size:.95rem;border-radius:11px;"><i class="fa-solid {{ department.icon or 'fa-hospital' }}"></i></span>
+                    <div>
+                      <div class="fw-600 fs-14 text-ink">{{ department.name }}</div>
+                      <div class="fs-13 text-muted-2 text-truncate" style="max-width:320px;">{{ department.description or 'No description' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="Floor / Ext.">
+                  <div class="fs-14">{{ department.floor or '—' }}</div>
+                  <div class="fs-13 text-muted-2">{% if department.phone_ext %}Ext. {{ department.phone_ext }}{% else %}No extension{% endif %}</div>
+                </td>
+                <td data-label="Doctors"><span class="badge-soft">{{ department.doctor_count }} active</span></td>
+                <td data-label="Status">
+                  {% if department.is_active %}<span class="badge-status completed"><i class="fa-solid fa-circle-check"></i>Active</span>
+                  {% else %}<span class="badge-status closed"><i class="fa-solid fa-circle"></i>Inactive</span>{% endif %}
+                </td>
+                <td data-label="Actions" class="text-end">
+                  <div class="d-inline-flex gap-1 flex-wrap justify-content-end">
+                    <a class="btn btn-sm btn-ghost" href="{{ url_for('admin.department_edit', department_id=department.id) }}"><i class="fa-solid fa-pen"></i></a>
+                    <form method="post" action="{{ url_for('admin.department_toggle', department_id=department.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn btn-sm btn-ghost" type="submit" title="{{ 'Deactivate' if department.is_active else 'Activate' }}">
+                        <i class="fa-solid {{ 'fa-toggle-on text-green' if department.is_active else 'fa-toggle-off' }}"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card-custom">
+      {{ empty_state('fa-hospital', 'No departments yet', 'Create your first department so doctors and patients can be grouped.', url_for('admin.department_new'), 'Create department') }}
+    </div>
+  {% endif %}
+{% endblock %}

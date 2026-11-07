@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<body style="margin:0;padding:0;background:#f5f9ff;font-family:Inter,Segoe UI,Arial,sans-serif;color:#334155;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f9ff;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:linear-gradient(135deg,#0d6efd,#083b78);padding:26px 30px;color:#ffffff;">
+              <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.78;">{{ hospital_name }}</div>
+              <h1 style="margin:8px 0 0;font-size:22px;line-height:1.25;color:#ffffff;">Your appointment is confirmed</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 30px 8px;">
+              <p style="margin:0 0 14px;font-size:15px;">Hello {{ patient.full_name }},</p>
+              <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#475569;">
+                Your visit with <strong>Dr. {{ doctor.name }}</strong> ({{ doctor.specialization }}, {{ doctor.department.name }}) has been booked. Your slot is locked — no other patient can take this time.
+              </p>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f8ff;border-radius:12px;padding:0;margin:0 0 18px;">
+                <tr>
+                  <td style="padding:16px 18px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Booking ID</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:700;color:#0b4f9e;">{{ appointment.booking_id }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Date</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ date_label }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Time</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ time_label }} – {{ appointment.end_time.strftime('%I:%M %p').lstrip('0') }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Room</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">{{ doctor.room_no or 'To be assigned' }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;color:#64748b;">Consultation fee</td>
+                        <td style="padding:5px 0;text-align:right;font-weight:600;">INR {{ '%.0f'|format(appointment.fee) }}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e6f9ee;border-radius:12px;margin:0 0 18px;">
+                <tr>
+                  <td style="padding:14px 18px;">
+                    <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#15803d;font-weight:700;">Estimated waiting time</div>
+                    <div style="font-size:24px;font-weight:700;color:#15803d;margin-top:2px;">{{ humanize_minutes(appointment.estimated_wait_minutes) }}</div>
+                    <div style="font-size:12px;color:#166534;margin-top:2px;">Queue position {{ appointment.queue_position or 1 }}</div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px;font-size:14px;line-height:1.7;color:#475569;">
+                Please arrive <strong>10 minutes early</strong> and show this booking ID at reception. You can view live queue updates and cancel (up to 2 hours before) from your MediQueue dashboard.
+              </p>
+              <p style="margin:0 0 22px;font-size:13px;line-height:1.7;color:#64748b;">
+                Need help? Call the appointment desk on +91 80 4567 8900.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 30px 24px;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">This is an automated message from {{ hospital_name }}. Please do not reply to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

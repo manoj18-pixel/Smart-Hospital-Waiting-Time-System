@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Contact MediQueue — Help and emergency numbers{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div class="container">
+    <span class="eyebrow"><i class="fa-solid fa-headset"></i> We are here to help</span>
+    <h1 class="mt-3">Contact &amp; support</h1>
+    <p class="text-muted-2 mb-0">For appointment help, cancellation questions or technical support, reach the right desk below.</p>
+  </div>
+</section>
+
+<section class="section pt-3">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="card-custom card-pad h-100">
+          <div class="stat-icon red"><i class="fa-solid fa-truck-medical"></i></div>
+          <h3 class="h5">Emergency</h3>
+          <p class="fs-14 text-muted-2">For life-threatening emergencies, call our 24×7 ambulance line immediately.</p>
+          <a class="btn btn-danger-soft w-100" href="tel:108"><i class="fa-solid fa-phone-volume me-2"></i>Call 108</a>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="card-custom card-pad h-100">
+          <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+          <h3 class="h5">Appointment desk</h3>
+          <p class="fs-14 text-muted-2 mb-2">Cancellations, rescheduling and booking help.</p>
+          <div class="fs-14"><i class="fa-solid fa-phone me-2 text-blue"></i>+91 80 4567 8900</div>
+          <div class="fs-14"><i class="fa-regular fa-envelope me-2 text-blue"></i>appointments@mediqueue.local</div>
+          <div class="fs-13 text-muted-2 mt-2">Mon–Sat, 8:00 AM – 8:00 PM</div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="card-custom card-pad h-100">
+          <div class="stat-icon green"><i class="fa-solid fa-headset"></i></div>
+          <h3 class="h5">Technical support</h3>
+          <p class="fs-14 text-muted-2 mb-2">Login, email or slot-display issues.</p>
+          <div class="fs-14"><i class="fa-regular fa-envelope me-2 text-green"></i>support@mediqueue.local</div>
+          <div class="fs-14"><i class="fa-solid fa-location-dot me-2 text-green"></i>12 Wellness Avenue, Medical District</div>
+          <div class="fs-13 text-muted-2 mt-2">Replies within one working day</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+      <div class="col-lg-7">
+        <div class="card-custom overflow-hidden h-100">
+          <div style="height:300px;background:linear-gradient(135deg,var(--blue-100),var(--green-100));display:grid;place-items:center;position:relative;">
+            <div class="text-center">
+              <div class="stat-icon blue mx-auto" style="background:#fff;"><i class="fa-solid fa-map-location-dot"></i></div>
+              <h3 class="h6 mb-1">MediQueue General Hospital</h3>
+              <p class="fs-13 text-muted-2 mb-0">12 Wellness Avenue, Medical District, Bengaluru 560001</p>
+              <span class="badge-soft mt-3"><i class="fa-solid fa-train-subway me-1"></i>5 min from City Metro</span>
+            </div>
+          </div>
+          <div class="card-body-custom">
+            <div class="row g-3 fs-14">
+              <div class="col-sm-6"><i class="fa-solid fa-square-parking me-2 text-blue"></i>Free patient parking, basement 1–2</div>
+              <div class="col-sm-6"><i class="fa-solid fa-wheelchair-move me-2 text-blue"></i>Step-free access at Gate 2</div>
+              <div class="col-sm-6"><i class="fa-solid fa-clock me-2 text-blue"></i>OPD: Mon–Sat, 8 AM – 8 PM</div>
+              <div class="col-sm-6"><i class="fa-solid fa-shield-heart me-2 text-blue"></i>Emergency: open 24 × 7</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card-custom card-pad h-100">
+          <h3 class="h5">Before you call</h3>
+          <p class="fs-14 text-muted-2">Most appointment questions can be answered instantly from your dashboard.</p>
+          <div class="timeline mt-3">
+            <div class="timeline-item"><span class="timeline-dot green"></span><div class="fw-600 fs-14 text-ink">Cancel an appointment</div><div class="fs-13 text-muted-2">Open My appointments → Cancel. Allowed up to 2 hours before the slot.</div></div>
+            <div class="timeline-item"><span class="timeline-dot"></span><div class="fw-600 fs-14 text-ink">Re-book a cancelled slot</div><div class="fs-13 text-muted-2">Cancelled future slots reopen automatically for other patients.</div></div>
+            <div class="timeline-item"><span class="timeline-dot"></span><div class="fw-600 fs-14 text-ink">Change your password</div><div class="fs-13 text-muted-2">Contact support with your registered email for a secure reset.</div></div>
+            <div class="timeline-item"><span class="timeline-dot green"></span><div class="fw-600 fs-14 text-ink">Billing &amp; fees</div><div class="fs-13 text-muted-2">Consultation fees are shown before you confirm a booking.</div></div>
+          </div>
+          <a class="btn btn-outline-primary w-100 mt-2" href="{{ url_for('auth.login') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Go to my dashboard</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

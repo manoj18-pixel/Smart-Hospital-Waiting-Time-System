@@ -1,0 +1,29 @@
+{{ hospital_name }}
+
+{% if appointment.status == 'CANCELLED' %}APPOINTMENT CANCELLED{% else %}APPOINTMENT CONFIRMED{% endif %}
+
+Hello {{ patient.full_name }},
+
+Doctor: Dr. {{ doctor.name }} ({{ doctor.specialization }})
+Department: {{ doctor.department.name }}
+Room: {{ doctor.room_no or 'To be assigned' }}
+Date: {{ date_label }}
+Time: {{ time_label }}
+Booking ID: {{ appointment.booking_id }}
+Status: {{ appointment.status }}
+Fee: INR {{ '%.0f'|format(appointment.fee) }}
+
+{% if appointment.status == 'CANCELLED' %}
+This appointment has been cancelled. The slot has been released for other patients.
+Reason: {{ appointment.cancel_reason or 'Not specified' }}
+{% else %}
+Estimated waiting time at booking: {{ humanize_minutes(appointment.estimated_wait_minutes) }}
+Queue position: {{ appointment.queue_position or 1 }}
+
+Please arrive 10 minutes early and show your booking ID at reception.
+You can manage this appointment from your MediQueue dashboard.
+{% endif %}
+
+Need help? Call the appointment desk on +91 80 4567 8900.
+
+This is an automated message from {{ hospital_name }}. Please do not reply.

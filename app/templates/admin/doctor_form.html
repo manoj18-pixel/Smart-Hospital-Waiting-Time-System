@@ -1,0 +1,80 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/forms.html" import field, textarea, select, checkbox, errors_summary %}
+{% block title %}{{ 'Edit' if doctor else 'Add' }} doctor — MediQueue{% endblock %}
+{% block dashboard_title %}Doctors{% endblock %}
+{% block page_title %}{{ 'Edit doctor' if doctor else 'Add a doctor' }}{% endblock %}
+{% block page_subtitle %}{{ 'Update the profile and login for Dr. ' ~ doctor.name if doctor else 'Create the doctor login and clinical profile.' }}{% endblock %}
+
+{% block dashboard_content %}
+  <div class="mb-4">
+    <a class="btn btn-sm btn-ghost" href="{{ url_for('admin.doctors') }}"><i class="fa-solid fa-arrow-left me-1"></i>Back to doctors</a>
+  </div>
+
+  {{ errors_summary(form) }}
+  <form method="post" novalidate data-loading>
+    {{ form.hidden_tag() }}
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card-custom mb-4">
+          <div class="card-head"><h3><i class="fa-regular fa-user me-2 text-blue"></i>Account details</h3></div>
+          <div class="card-body-custom">
+            <div class="row g-3">
+              <div class="col-md-7">{{ field(form.full_name, icon='fa-user-doctor', placeholder='Dr. Full name', autocomplete='name') }}</div>
+              <div class="col-md-5">{{ field(form.phone, icon='fa-phone', placeholder='Optional', autocomplete='tel') }}</div>
+              <div class="col-md-7">{{ field(form.email, icon='fa-envelope', placeholder='doctor@hospital.com', autocomplete='email') }}</div>
+              <div class="col-md-5">{{ field(form.password, icon='fa-lock', placeholder='Leave blank to keep', autocomplete='new-password', help='At least 8 characters with a letter and number.') }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-custom mb-4">
+          <div class="card-head"><h3><i class="fa-solid fa-stethoscope me-2 text-blue"></i>Clinical profile</h3></div>
+          <div class="card-body-custom">
+            <div class="row g-3">
+              <div class="col-md-6">{{ select(form.department_id, icon='fa-building') }}</div>
+              <div class="col-md-6">{{ field(form.specialization, icon='fa-stethoscope', placeholder='e.g. Interventional cardiologist') }}</div>
+              <div class="col-md-6">{{ field(form.qualification, icon='fa-graduation-cap', placeholder='e.g. MBBS, MD (Cardiology)') }}</div>
+              <div class="col-md-3">{{ field(form.experience_years, icon='fa-award', placeholder='Years') }}</div>
+              <div class="col-md-3">{{ field(form.room_no, icon='fa-door-open', placeholder='Room') }}</div>
+              <div class="col-md-4">{{ field(form.consultation_fee, icon='fa-indian-rupee-sign', placeholder='500') }}</div>
+              <div class="col-md-4">{{ field(form.avg_consult_minutes, icon='fa-clock', placeholder='15') }}</div>
+              <div class="col-md-4">{{ field(form.photo_url, icon='fa-image', placeholder='Optional photo URL') }}</div>
+              <div class="col-12">{{ textarea(form.bio, rows=4, placeholder='Short professional bio shown on the doctor profile…') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card-custom mb-4">
+          <div class="card-head"><h3>Visibility</h3></div>
+          <div class="card-body-custom">
+            {{ checkbox(form.is_active, 'Doctor is active and accepting appointments') }}
+            <div class="alert alert-info mb-0 fs-13">
+              <i class="fa-solid fa-circle-info me-1"></i>Inactive doctors disappear from patient search, but their existing appointments stay intact.
+            </div>
+          </div>
+        </div>
+
+        <div class="card-custom mb-4 card-pad">
+          <div class="meta-label mb-2">Next step</div>
+          <p class="fs-13 text-muted-2 mb-0">
+            {% if doctor %}
+              Add or adjust weekly OPD hours on the schedules page. New slots are generated automatically for the next 30 days.
+            {% else %}
+              After saving, you will be taken to the schedule page to add weekly OPD hours. Slots are generated from those hours.
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="card-custom card-pad">
+          <button class="btn btn-primary w-100" type="submit"><i class="fa-solid fa-floppy-disk me-2"></i>{{ 'Save changes' if doctor else 'Create doctor' }}</button>
+          <a class="btn btn-ghost w-100 mt-2" href="{{ url_for('admin.doctors') }}">Cancel</a>
+          {% if doctor %}
+            <a class="btn btn-outline-primary w-100 mt-2" href="{{ url_for('admin.schedules', doctor_id=doctor.id) }}"><i class="fa-regular fa-calendar-days me-2"></i>Manage schedules</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </form>
+{% endblock %}

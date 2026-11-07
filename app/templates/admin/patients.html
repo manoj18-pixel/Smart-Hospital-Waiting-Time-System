@@ -1,0 +1,80 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import empty_state %}
+{% block title %}Patients — Admin — MediQueue{% endblock %}
+{% block dashboard_title %}Patients{% endblock %}
+{% block page_title %}Patients{% endblock %}
+{% block page_subtitle %}Registered patient accounts and their appointment counts.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="card-custom card-pad mb-4">
+    <form method="get" action="{{ url_for('admin.patients') }}" class="filter-bar">
+      <div class="input-icon flex-grow-1" style="max-width:420px;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input class="form-control" type="search" name="q" value="{{ search }}" placeholder="Search by name or email…" aria-label="Search patients">
+      </div>
+      <button class="btn btn-primary" type="submit">Search</button>
+      {% if search %}<a class="btn btn-ghost" href="{{ url_for('admin.patients') }}">Clear</a>{% endif %}
+      <span class="badge-soft ms-auto">{{ patients|length }} shown</span>
+    </form>
+  </div>
+
+  {% if patients %}
+    <div class="card-custom">
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead>
+            <tr><th>Patient</th><th>Contact</th><th>Joined</th><th>Appointments</th><th>Status</th><th class="text-end">Actions</th></tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+              <tr>
+                <td data-label="Patient">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="nav-avatar">{{ patient.initials }}</span>
+                    <div>
+                      <div class="fw-600 fs-14 text-ink">{{ patient.full_name }}</div>
+                      <div class="fs-13 text-muted-2">#{{ patient.id }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td data-label="Contact">
+                  <div class="fs-14">{{ patient.email }}</div>
+                  <div class="fs-13 text-muted-2">{{ patient.phone or 'No phone' }}</div>
+                </td>
+                <td data-label="Joined"><span class="fs-14">{{ patient.created_at.strftime('%d %b %Y') }}</span></td>
+                <td data-label="Appointments">
+                  {% set total = patient.appointments.count() %}
+                  <span class="badge-soft">{{ total }} total</span>
+                  <div class="fs-13 text-muted-2 mt-1">
+                    {% set active = patient.appointments.filter_by(status='CONFIRMED').count() %}
+                    {{ active }} upcoming
+                  </div>
+                </td>
+                <td data-label="Status">
+                  {% if patient.is_active %}<span class="badge-status completed"><i class="fa-solid fa-circle-check"></i>Active</span>
+                  {% else %}<span class="badge-status closed"><i class="fa-solid fa-circle"></i>Disabled</span>{% endif %}
+                </td>
+                <td data-label="Actions" class="text-end">
+                  <form method="post" action="{{ url_for('admin.patient_toggle', user_id=patient.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm {{ 'btn-danger-soft' if patient.is_active else 'btn-outline-primary' }}" type="submit">
+                      {{ 'Disable' if patient.is_active else 'Enable' }}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card-custom">
+      {% if search %}
+        {{ empty_state('fa-magnifying-glass', 'No matching patients', 'Try a different name or email address.', url_for('admin.patients'), 'Clear search') }}
+      {% else %}
+        {{ empty_state('fa-users', 'No patients yet', 'Patients who register on the public site will appear here.') }}
+      {% endif %}
+    </div>
+  {% endif %}
+{% endblock %}

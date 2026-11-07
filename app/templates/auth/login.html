@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "macros/forms.html" import errors_summary %}
+{% block title %}Sign in — MediQueue{% endblock %}
+{% block body_class %}auth-body{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-visual">
+    <img src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=1200&q=80" alt="Doctor talking with a patient in a bright clinic" onerror="this.style.display='none'">
+    <div class="auth-visual-content">
+      <span class="eyebrow" style="background:rgba(255,255,255,.16);color:#fff;width:max-content;"><i class="fa-solid fa-heart-pulse"></i> MediQueue care</span>
+      <h2 class="mt-3">Your appointment,<br>confirmed in seconds.</h2>
+      <p>Sign in to see live doctor availability, your upcoming visits and your place in the queue.</p>
+      <div class="auth-quote">
+        <i class="fa-solid fa-quote-left me-2" style="opacity:.5;"></i>
+        I booked a cardiology slot from my phone during lunch. The 1:00 PM slot was locked instantly and the waiting-time estimate was spot on.
+        <div class="who">— Asha, patient since 2025</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-form-wrap">
+    <div class="auth-card">
+      <span class="eyebrow green"><i class="fa-solid fa-right-to-bracket"></i> Welcome back</span>
+      <h1 class="mt-3">Sign in to MediQueue</h1>
+      <p class="sub">Use the email address and password you registered with.</p>
+
+      {{ errors_summary(form) }}
+      <form method="post" action="{{ url_for('auth.login', next=request.args.get('next')) }}" novalidate data-loading>
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+          {{ form.email.label(class="form-label") }}
+          <div class="input-icon">
+            <i class="fa-regular fa-envelope"></i>
+            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="you@example.com", autocomplete="email") }}
+          </div>
+          {% for error in form.email.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between">
+            {{ form.password.label(class="form-label") }}
+            <a href="{{ url_for('main.contact') }}" class="fs-13 fw-600">Forgot password?</a>
+          </div>
+          <div class="input-icon position-relative">
+            <i class="fa-solid fa-lock"></i>
+            {{ form.password(class="form-control pe-5" + (" is-invalid" if form.password.errors else ""), id="loginPassword", placeholder="Your password", autocomplete="current-password") }}
+            <button type="button" class="password-toggle" data-toggle-password="loginPassword" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+          </div>
+          {% for error in form.password.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check">
+            {{ form.remember(class="form-check-input") }}
+            {{ form.remember.label(class="form-check-label fs-14") }}
+          </div>
+          <span class="fs-13 text-muted-2"><i class="fa-solid fa-lock me-1"></i>Secure session</span>
+        </div>
+
+        <button class="btn btn-primary w-100 btn-lg" type="submit">Sign in <i class="fa-solid fa-arrow-right ms-1"></i></button>
+      </form>
+
+      <div class="auth-divider">New to MediQueue?</div>
+      <a class="btn btn-outline-primary w-100" href="{{ url_for('auth.register') }}"><i class="fa-solid fa-user-plus me-2"></i>Create a patient account</a>
+
+      {% if config.DEBUG %}
+      <div class="demo-accounts mt-4">
+        <strong class="text-ink d-block mb-1"><i class="fa-solid fa-flask me-1"></i>Demo accounts (after seeding)</strong>
+        Patient: <code>asha@example.com</code> / <code>Patient@123</code><br>
+        Doctor: <code>dr.arjun@mediqueue.local</code> / <code>Doctor@123</code><br>
+        Admin: <code>admin@mediqueue.local</code> / <code>Admin@123</code>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

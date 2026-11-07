@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{% block dashboard_title %}Dashboard{% endblock %} — MediQueue{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Dashboard navigation">
+    <div class="sidebar-role">
+      <span class="nav-avatar">{{ current_user.initials }}</span>
+      <div class="min-w-0">
+        <div class="r-name text-truncate">{{ current_user.full_name }}</div>
+        <div class="r-role">{{ current_user.role }}</div>
+      </div>
+    </div>
+
+    <div class="sidebar-heading">Workspace</div>
+    {% if current_user.role == 'patient' %}
+      <a class="sidebar-link {% if request.endpoint == 'patient.dashboard' %}active{% endif %}" href="{{ url_for('patient.dashboard') }}"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="sidebar-link {% if request.endpoint in ['patient.departments', 'patient.doctors', 'patient.doctor_profile'] %}active{% endif %}" href="{{ url_for('patient.departments') }}"><i class="fa-solid fa-hospital"></i>Departments</a>
+      <a class="sidebar-link {% if request.endpoint in ['patient.appointments', 'patient.appointment_detail', 'patient.confirmation'] %}active{% endif %}" href="{{ url_for('patient.appointments') }}"><i class="fa-regular fa-calendar-check"></i>My appointments</a>
+      <a class="sidebar-link {% if request.endpoint == 'patient.book' %}active{% endif %}" href="{{ url_for('patient.departments') }}"><i class="fa-solid fa-calendar-plus"></i>Book appointment</a>
+    {% elif current_user.role == 'doctor' %}
+      <a class="sidebar-link {% if request.endpoint == 'doctor.dashboard' %}active{% endif %}" href="{{ url_for('doctor.dashboard') }}"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="sidebar-link {% if request.endpoint == 'doctor.schedule' %}active{% endif %}" href="{{ url_for('doctor.schedule') }}"><i class="fa-regular fa-calendar-days"></i>Daily schedule</a>
+      <a class="sidebar-link" href="{{ url_for('doctor.schedule') }}?date={{ today_date.isoformat() }}"><i class="fa-solid fa-users"></i>Today's queue</a>
+    {% else %}
+      <a class="sidebar-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" href="{{ url_for('admin.dashboard') }}"><i class="fa-solid fa-gauge-high"></i>Dashboard</a>
+      <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.department') %}active{% endif %}" href="{{ url_for('admin.departments') }}"><i class="fa-solid fa-hospital"></i>Departments</a>
+      <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.doctor') %}active{% endif %}" href="{{ url_for('admin.doctors') }}"><i class="fa-solid fa-user-doctor"></i>Doctors</a>
+      <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.patient') %}active{% endif %}" href="{{ url_for('admin.patients') }}"><i class="fa-solid fa-users"></i>Patients</a>
+      <a class="sidebar-link {% if request.endpoint and request.endpoint.startswith('admin.appointment') %}active{% endif %}" href="{{ url_for('admin.appointments') }}"><i class="fa-regular fa-calendar"></i>Appointments</a>
+    {% endif %}
+
+    <div class="sidebar-heading">Hospital</div>
+    <a class="sidebar-link" href="{{ url_for('main.index') }}"><i class="fa-solid fa-house"></i>Public website</a>
+    <a class="sidebar-link" href="{{ url_for('main.contact') }}"><i class="fa-solid fa-headset"></i>Help &amp; support</a>
+
+    <div class="sidebar-footer">
+      <div class="d-flex align-items-center gap-2 px-2 mb-2 fs-13 text-muted-2">
+        <i class="fa-solid fa-shield-heart text-green"></i> Secure session active
+      </div>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="sidebar-link w-100 border-0 bg-transparent" type="submit"><i class="fa-solid fa-right-from-bracket"></i>Sign out</button>
+      </form>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <div class="dashboard-main">
+    <div class="dashboard-topbar">
+      <div class="d-flex align-items-center gap-2">
+        <button class="mobile-menu-btn" id="menuToggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div>
+          <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+          <p>{% block page_subtitle %}{% endblock %}</p>
+        </div>
+      </div>
+      <div class="d-none d-md-flex align-items-center gap-2">
+        <span class="badge-soft"><i class="fa-regular fa-calendar me-1"></i>{{ today_date|date_label }}</span>
+        <span class="nav-avatar">{{ current_user.initials }}</span>
+      </div>
+    </div>
+
+    {% block dashboard_content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}

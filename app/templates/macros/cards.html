@@ -1,0 +1,75 @@
+{% macro status_badge(status) -%}
+  {% set cls = status|lower %}
+  {% set label = status|replace('_', ' ')|title %}
+  <span class="badge-status {{ cls }}"><i class="fa-solid {{ 'fa-circle-check' if status == 'COMPLETED' else ('fa-circle-xmark' if status in ['CANCELLED', 'NO_SHOW'] else ('fa-clock' if status in ['CHECKED_IN', 'CONFIRMED', 'IN_CONSULTATION'] else 'fa-circle')) }}"></i>{{ label }}</span>
+{%- endmacro %}
+
+{% macro stat_card(icon, value, label, tone='blue', hint=None) %}
+  <div class="stat-card fade-up">
+    <div class="stat-icon {{ tone }}"><i class="fa-solid {{ icon }}"></i></div>
+    <div class="stat-value">{{ value }}</div>
+    <div class="stat-label">{{ label }}</div>
+    {% if hint %}<div class="fs-13 text-muted-2 mt-1">{{ hint }}</div>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro doctor_card(doctor, next_date=None, show_book=True) %}
+  <div class="doctor-card fade-up">
+    <div class="doctor-photo-wrap">
+      {% if doctor.photo_url %}
+        <img src="{{ doctor.photo_url }}" alt="Portrait of {{ doctor.name }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">
+        <div class="avatar-fallback" style="display:none;">{{ doctor.initials }}</div>
+      {% else %}
+        <div class="avatar-fallback">{{ doctor.initials }}</div>
+      {% endif %}
+      <span class="doctor-badge"><i class="fa-solid fa-circle-check me-1"></i>{{ doctor.experience_years }} yrs exp</span>
+    </div>
+    <div class="doctor-body">
+      <h3>{{ doctor.name }}</h3>
+      <div class="doctor-spec">{{ doctor.specialization }}</div>
+      <div class="doctor-meta">
+        <span><i class="fa-solid fa-building me-1"></i>{{ doctor.department.name }}</span>
+        <span><i class="fa-solid fa-sterling-sign me-1"></i>₹{{ '%.0f'|format(doctor.consultation_fee) }}</span>
+      </div>
+      <p class="fs-13 text-muted-2 mb-3">{% if doctor.qualification %}{{ doctor.qualification }}{% else %}Experienced specialist{% endif %}</p>
+      <div class="d-flex align-items-center justify-content-between gap-2">
+        <span class="fs-13 text-muted-2">
+          {% if next_date %}<i class="fa-regular fa-calendar-check text-green me-1"></i>Next: {{ next_date|date_label }}{% else %}<i class="fa-regular fa-calendar me-1"></i>View schedule{% endif %}
+        </span>
+        {% if show_book %}
+          <a class="btn btn-sm btn-primary" href="{{ url_for('patient.book', doctor_id=doctor.id) }}">Book <i class="fa-solid fa-arrow-right ms-1"></i></a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro dept_card(department) %}
+  <a class="dept-card fade-up" href="{{ url_for('patient.doctors', department_id=department.id) }}">
+    <div class="dept-icon"><i class="fa-solid {{ department.icon or 'fa-hospital' }}"></i></div>
+    <h3>{{ department.name }}</h3>
+    <p>{{ department.description or 'Comprehensive care from experienced specialists.' }}</p>
+    <div class="dept-meta">
+      <span><i class="fa-solid fa-user-doctor me-1"></i><strong>{{ department.doctor_count }}</strong> doctors</span>
+      <span>View <i class="fa-solid fa-arrow-right ms-1"></i></span>
+    </div>
+  </a>
+{% endmacro %}
+
+{% macro slot_legend() %}
+  <div class="slot-legend" aria-label="Slot colour legend">
+    <span><span class="legend-dot available"></span>Available</span>
+    <span><span class="legend-dot selected"></span>Selected</span>
+    <span><span class="legend-dot booked"></span>Booked</span>
+    <span><span class="legend-dot blocked"></span>Unavailable</span>
+  </div>
+{% endmacro %}
+
+{% macro empty_state(icon, title, text, action_url=None, action_label=None) %}
+  <div class="empty-state">
+    <div class="empty-icon"><i class="fa-solid {{ icon }}"></i></div>
+    <h4>{{ title }}</h4>
+    <p>{{ text }}</p>
+    {% if action_url %}<a class="btn btn-primary" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+  </div>
+{% endmacro %}

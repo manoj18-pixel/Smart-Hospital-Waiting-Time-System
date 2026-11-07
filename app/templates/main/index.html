@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% from "macros/cards.html" import dept_card, doctor_card, slot_legend, stat_card %}
+{% block title %}MediQueue — Book hospital appointments without the wait{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 hero-copy">
+        <span class="eyebrow fade-up"><i class="fa-solid fa-circle-check"></i> Smart waiting-time system</span>
+        <h1 class="hero-title fade-up delay-1">Healthcare that respects <span>your time.</span></h1>
+        <p class="hero-lead fade-up delay-2">Choose a department, pick a doctor and lock a time slot in seconds. MediQueue shows live availability, prevents double bookings and estimates exactly how long you will wait.</p>
+        <div class="hero-actions fade-up delay-3">
+          <a class="btn btn-primary btn-lg" href="{{ url_for('patient.departments') if current_user.is_authenticated and current_user.role == 'patient' else url_for('auth.register') }}">
+            <i class="fa-solid fa-calendar-plus me-2"></i>Book an appointment
+          </a>
+          <a class="btn btn-outline-primary btn-lg" href="#departments"><i class="fa-solid fa-stethoscope me-2"></i>Find a doctor</a>
+        </div>
+        <div class="hero-trust fade-up delay-4">
+          <span><i class="fa-solid fa-shield-heart"></i> Secure email login</span>
+          <span><i class="fa-solid fa-lock"></i> Instant slot locking</span>
+          <span><i class="fa-solid fa-clock"></i> Live wait estimates</span>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="hero-visual fade-up delay-2">
+          <div class="hero-photo-frame">
+            <img src="https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=1200&q=80" alt="Bright modern hospital corridor with medical staff" onerror="this.style.display='none'">
+            <div class="hero-photo-overlay"></div>
+            <div class="hero-photo-caption">
+              <strong>{{ hospital_name }}</strong>
+              <span>Compassionate care, seven days a week</span>
+            </div>
+          </div>
+          <div class="floating-card one">
+            <div class="fc-icon" style="background:var(--green-100);color:var(--green-700);"><i class="fa-solid fa-clock"></i></div>
+            <div><strong>~12 min</strong><span>Average wait today</span></div>
+          </div>
+          <div class="floating-card two">
+            <div class="fc-icon" style="background:var(--blue-100);color:var(--blue-700);"><i class="fa-solid fa-calendar-check"></i></div>
+            <div><strong>1:20 PM</strong><span>Next available slot</span></div>
+          </div>
+          <div class="floating-card three">
+            <div class="fc-icon" style="background:var(--amber-100);color:var(--amber-600);"><i class="fa-solid fa-user-shield"></i></div>
+            <div><strong>Zero double bookings</strong><span>Locked in the database</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="trust-strip">
+  <div class="container">
+    <div class="trust-inner">
+      <span><i class="fa-solid fa-hospital"></i>{{ stats.departments }} departments</span>
+      <span><i class="fa-solid fa-user-doctor"></i>{{ stats.doctors }} specialist doctors</span>
+      <span><i class="fa-solid fa-users"></i>{{ stats.patients }} registered patients</span>
+      <span><i class="fa-solid fa-calendar-check"></i>{{ stats.appointments }} appointments managed</span>
+      <span><i class="fa-solid fa-notes-medical"></i>NABH-style care standards</span>
+    </div>
+  </div>
+</div>
+
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow green">Simple by design</span>
+      <h2 class="mt-3">Three steps from symptom to slot</h2>
+      <p class="text-muted-2">No phone calls, no queues at reception. Your appointment is confirmed the moment you book.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="step-card fade-up">
+          <span class="step-number">01</span>
+          <div class="step-icon"><i class="fa-solid fa-hospital"></i></div>
+          <h3>Choose a department</h3>
+          <p>Browse cardiology, neurology, paediatrics and more. See how many specialists are available right now.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card fade-up delay-1">
+          <span class="step-number">02</span>
+          <div class="step-icon"><i class="fa-solid fa-user-doctor"></i></div>
+          <h3>Pick your doctor &amp; slot</h3>
+          <p>Compare experience and fees, then select a green slot. Booked slots are locked and shown in grey.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card fade-up delay-2">
+          <span class="step-number">03</span>
+          <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
+          <h3>Get confirmed instantly</h3>
+          <p>Receive a booking ID, queue position and estimated waiting time by email. Manage everything from your dashboard.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section bg-soft" id="departments">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+      <div>
+        <span class="eyebrow">Our specialities</span>
+        <h2 class="mt-3 mb-1">Find the right department</h2>
+        <p class="text-muted-2 mb-0">Expert care across every major speciality, under one roof.</p>
+      </div>
+      <a class="btn btn-outline-primary" href="{{ url_for('patient.departments') if current_user.is_authenticated and current_user.role == 'patient' else url_for('auth.login', next=url_for('patient.departments')) }}">View all departments <i class="fa-solid fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="row g-4">
+      {% for department in departments %}
+        <div class="col-sm-6 col-lg-3">{{ dept_card(department) }}</div>
+      {% else %}
+        <div class="col-12"><div class="alert alert-info">Departments will appear here after the demo data is loaded.</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <span class="eyebrow green">The core promise</span>
+        <h2 class="mt-3">One doctor. One patient. Every slot.</h2>
+        <p class="text-muted-2">When a patient books 1:00 PM, that slot is locked in the database instantly. The next patient sees it as booked and chooses 2:00 PM instead — even if both click at the same moment.</p>
+        <ul class="list-clean mt-4">
+          <li class="d-flex gap-3 mb-3"><span class="stat-icon green m-0" style="width:38px;height:38px;font-size:.9rem;flex:0 0 auto;"><i class="fa-solid fa-database"></i></span><span class="fs-14"><strong class="text-ink d-block">Database-level locking</strong>Atomic conditional updates plus a unique constraint.</span></li>
+          <li class="d-flex gap-3 mb-3"><span class="stat-icon blue m-0" style="width:38px;height:38px;font-size:.9rem;flex:0 0 auto;"><i class="fa-solid fa-bolt"></i></span><span class="fs-14"><strong class="text-ink d-block">Instant availability refresh</strong>Booked slots turn grey for everyone in real time.</span></li>
+          <li class="d-flex gap-3"><span class="stat-icon amber m-0" style="width:38px;height:38px;font-size:.9rem;flex:0 0 auto;"><i class="fa-solid fa-arrows-rotate"></i></span><span class="fs-14"><strong class="text-ink d-block">Fair cancellations</strong>Cancelled slots reopen automatically, within hospital rules.</span></li>
+        </ul>
+      </div>
+      <div class="col-lg-7">
+        <div class="card-custom card-pad fade-up">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <div class="fw-700 text-ink">Dr. Arjun Mehta</div>
+              <div class="fs-13 text-muted-2">Cardiology · Room C-204</div>
+            </div>
+            <span class="badge-soft green"><i class="fa-solid fa-circle me-1" style="font-size:.4rem;vertical-align:2px;"></i>Today, 6 Nov</span>
+          </div>
+          <hr class="soft-divider">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="fs-14 fw-600 text-ink">Afternoon slots</span>
+            <span class="fs-13 text-muted-2">14 of 18 available</span>
+          </div>
+          <div class="slot-grid">
+            <button class="slot-btn" type="button" disabled><span>12:20 PM</span><span class="slot-lock">Booked</span></button>
+            <button class="slot-btn" type="button"><span>1:00 PM</span><small>20 min</small></button>
+            <button class="slot-btn selected" type="button"><span>1:20 PM</span><small>Selected</small></button>
+            <button class="slot-btn" type="button"><span>1:40 PM</span><small>20 min</small></button>
+            <button class="slot-btn booked" type="button" disabled><span>2:00 PM</span><span class="slot-lock"><i class="fa-solid fa-lock"></i> Booked</span></button>
+            <button class="slot-btn" type="button"><span>2:20 PM</span><small>20 min</small></button>
+            <button class="slot-btn" type="button"><span>2:40 PM</span><small>20 min</small></button>
+            <button class="slot-btn blocked" type="button" disabled><span>3:00 PM</span><span class="slot-lock">On leave</span></button>
+          </div>
+          <div class="mt-3">{{ slot_legend() }}</div>
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">Book this slot <i class="fa-solid fa-arrow-right ms-1"></i></a>
+            <span class="pill-note"><i class="fa-solid fa-lock"></i>Slot locked on booking</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section bg-soft">
+  <div class="container">
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-5">
+        <span class="eyebrow green">Live queue</span>
+        <h2 class="mt-3">Know your wait before you leave home</h2>
+        <p class="text-muted-2">The waiting-time engine multiplies the patients ahead of you by your doctor's average consultation time, then adds any running delay. Estimates refresh as the queue moves.</p>
+        <div class="row g-3 mt-3">
+          <div class="col-6"><div class="stat-card"><div class="stat-value">~35<span class="fs-14 text-muted-2"> min</span></div><div class="stat-label">Sample wait, 2 ahead</div></div></div>
+          <div class="col-6"><div class="stat-card"><div class="stat-value">03<span class="fs-14 text-muted-2">rd</span></div><div class="stat-label">Your queue position</div></div></div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="queue-preview fade-up">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <h2 class="mb-1">Cardiology OPD</h2>
+              <p class="mb-0">Dr. Arjun Mehta · 10 Nov 2026</p>
+            </div>
+            <span class="badge-soft green d-none d-sm-inline"><i class="fa-solid fa-circle me-1" style="font-size:.4rem;vertical-align:2px;"></i>Queue live</span>
+          </div>
+          <div class="queue-row"><span class="queue-token">01</span><div><div class="q-name">Aarav Sharma</div><div class="q-meta">Booking MQ-20261110-0001</div></div><span class="queue-time">In consultation</span></div>
+          <div class="queue-row"><span class="queue-token">02</span><div><div class="q-name">Priya Nair</div><div class="q-meta">Booking MQ-20261110-0002</div></div><span class="queue-time">Checked in</span></div>
+          <div class="queue-row"><span class="queue-token">03</span><div><div class="q-name">You</div><div class="q-meta">Booking MQ-20261110-0004</div></div><span class="queue-time">~20 min</span></div>
+          <div class="queue-row"><span class="queue-token">04</span><div><div class="q-name">Meera Iyer</div><div class="q-meta">Booking MQ-20261110-0005</div></div><span class="queue-time">~35 min</span></div>
+          <p class="fs-13 mb-0 mt-3" style="color:rgba(255,255,255,.6);"><i class="fa-solid fa-circle-info me-1"></i>Estimates update automatically as the doctor completes consultations.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+      <div>
+        <span class="eyebrow">Meet the team</span>
+        <h2 class="mt-3 mb-1">Doctors who make the difference</h2>
+        <p class="text-muted-2 mb-0">Experienced specialists, transparent fees, real availability.</p>
+      </div>
+      <a class="btn btn-outline-primary" href="{{ url_for('patient.departments') if current_user.is_authenticated and current_user.role == 'patient' else url_for('auth.login') }}">Browse all doctors <i class="fa-solid fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="row g-4">
+      {% for doctor in doctors %}
+        <div class="col-sm-6 col-lg-3">{{ doctor_card(doctor) }}</div>
+      {% else %}
+        <div class="col-12"><div class="alert alert-info">Doctor profiles appear here after the demo data is loaded.</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section pt-0">
+  <div class="container">
+    <div class="cta-band">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <span class="eyebrow" style="background:rgba(255,255,255,.16);color:#fff;">Ready when you are</span>
+          <h2 class="mt-3 mb-2">Skip the queue. Book your slot today.</h2>
+          <p class="mb-0">Create a free patient account, pick a doctor and get an instant confirmation with your estimated waiting time.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          <a class="btn btn-white btn-lg" href="{{ url_for('auth.register') }}"><i class="fa-solid fa-user-plus me-2"></i>Create patient account</a>
+          <div class="fs-13 mt-2" style="color:rgba(255,255,255,.7);">Already registered? <a href="{{ url_for('auth.login') }}" class="text-white fw-600">Sign in</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Reveal cards as they enter the viewport (progressive enhancement)
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) { entry.target.classList.add("fade-up"); io.unobserve(entry.target); }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll(".dept-card, .doctor-card").forEach((el) => io.observe(el));
+  }
+</script>
+{% endblock %}

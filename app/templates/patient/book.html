@@ -1,0 +1,147 @@
+{% extends "layouts/dashboard.html" %}
+{% from "macros/cards.html" import slot_legend %}
+{% block title %}Book with Dr. {{ doctor.name }} — MediQueue{% endblock %}
+{% block dashboard_title %}Book appointment{% endblock %}
+{% block page_title %}Book an appointment{% endblock %}
+{% block page_subtitle %}Choose a date and an available time slot. Your slot is locked the moment you confirm.{% endblock %}
+
+{% block dashboard_content %}
+  <div class="stepper mb-4" aria-label="Booking steps">
+    <div class="stepper-item done"><span class="num"><i class="fa-solid fa-check"></i></span><span class="step-label">Department</span></div>
+    <div class="stepper-line"></div>
+    <div class="stepper-item done"><span class="num"><i class="fa-solid fa-check"></i></span><span class="step-label">Doctor</span></div>
+    <div class="stepper-line"></div>
+    <div class="stepper-item active"><span class="num">3</span><span class="step-label">Date &amp; time</span></div>
+    <div class="stepper-line"></div>
+    <div class="stepper-item"><span class="num">4</span><span class="step-label">Confirm</span></div>
+  </div>
+
+  <div class="mb-4"><a class="btn btn-sm btn-ghost" href="{{ url_for('patient.doctor_profile', doctor_id=doctor.id) }}"><i class="fa-solid fa-arrow-left me-1"></i>Back to doctor profile</a></div>
+
+  <form method="post" action="{{ url_for('patient.book', doctor_id=doctor.id) }}" id="bookingForm" novalidate data-loading>
+    {{ form.hidden_tag() }}
+    <input type="hidden" name="date" value="{{ selected_date.isoformat() }}">
+    {{ form.slot_id(id="slotId", value="") }}
+
+    <div class="booking-grid">
+      <div>
+        <div class="card-custom mb-4">
+          <div class="card-head">
+            <div>
+              <h3><i class="fa-regular fa-calendar me-2 text-blue"></i>Select a date</h3>
+              <div class="fs-13 text-muted-2 mt-1">{{ doctor.department.name }} · Dr. {{ doctor.name }}</div>
+            </div>
+            <span class="badge-soft"><i class="fa-solid fa-clock me-1"></i>{{ doctor.avg_consult_minutes }} min / patient</span>
+          </div>
+          <div class="card-body-custom pb-2">
+            {% if date_options %}
+              <div class="date-pills" role="tablist" aria-label="Available dates">
+                {% for option in date_options %}
+                  <a class="date-pill {% if option.date == selected_date %}active{% endif %}" href="{{ url_for('patient.book', doctor_id=doctor.id, date=option.date.isoformat()) }}" role="tab" aria-selected="{{ 'true' if option.date == selected_date else 'false' }}">
+                    <span class="dow">{{ option.date.strftime('%a') }}</span>
+                    <span class="num">{{ option.date.strftime('%d') }}</span>
+                    <span class="count">{{ option.date.strftime('%b') }} · {{ option.available }} open</span>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="alert alert-warning mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>No open dates in the next two weeks. Please check back or choose another doctor.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-custom mb-4">
+          <div class="card-head">
+            <h3><i class="fa-regular fa-clock me-2 text-blue"></i>Available time slots</h3>
+            <span class="fs-13 text-muted-2">{{ selected_date|date_label }}</span>
+          </div>
+          <div class="card-body-custom">
+            {{ slot_legend() }}
+            <hr class="soft-divider my-3">
+            <div class="slot-grid" id="slotGrid" data-doctor-id="{{ doctor.id }}" data-date="{{ selected_date.isoformat() }}">
+              {% for row in payload.slots %}
+                {% if row.available %}
+                  <button type="button" class="slot-btn" data-slot-id="{{ row.id }}" data-label="{{ row.label }}" aria-label="Select {{ row.label }} to {{ row.end_label }}">
+                    <span>{{ row.label }}</span>
+                    <small>to {{ row.end_label }}</small>
+                  </button>
+                {% else %}
+                  {% set state = row.status %}
+                  <button type="button" class="slot-btn {% if state == 'BOOKED' %}booked{% elif state == 'BLOCKED' %}blocked{% endif %}" disabled aria-disabled="true" aria-label="{{ row.label }} unavailable">
+                    <span>{{ row.label }}</span>
+                    <span class="slot-lock">
+                      {% if state == 'BOOKED' %}<i class="fa-solid fa-lock"></i> Booked{% elif state == 'BLOCKED' %}<i class="fa-solid fa-ban"></i> On leave{% else %}Passed{% endif %}
+                    </span>
+                  </button>
+                {% endif %}
+              {% else %}
+                <div class="text-muted-2 fs-14">No slots exist for this date. Choose another date above.</div>
+              {% endfor %}
+            </div>
+            <div id="slotEmpty" class="mt-3 fs-13 text-muted-2" style="display:none;"></div>
+            <div class="mt-4 d-flex flex-wrap align-items-center gap-2 fs-13 text-muted-2">
+              <span class="pill-note"><i class="fa-solid fa-bolt"></i>Booked slots lock instantly</span>
+              <span><i class="fa-solid fa-arrows-rotate me-1"></i>Availability refreshes automatically</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-custom">
+          <div class="card-head"><h3><i class="fa-solid fa-notes-medical me-2 text-blue"></i>Reason for visit <span class="fs-13 text-muted-2 fw-normal">(optional)</span></h3></div>
+          <div class="card-body-custom">
+            {{ form.reason(class="form-control", rows="3", placeholder="Briefly describe your symptoms or reason for this visit…", maxlength="300") }}
+            {% for error in form.reason.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+            <div class="form-text mt-2"><i class="fa-solid fa-lock me-1"></i>This note is visible only to you and your doctor.</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="booking-summary">
+        <div class="card-custom">
+          <div class="card-head"><h3>Booking summary</h3></div>
+          <div class="card-body-custom">
+            <div class="doctor-mini">
+              <span class="avatar">
+                {% if doctor.photo_url %}
+                  <img src="{{ doctor.photo_url }}" alt="{{ doctor.name }}" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=&quot;avatar-fallback&quot;>{{ doctor.initials }}</div>';">
+                {% else %}
+                  <div class="avatar-fallback">{{ doctor.initials }}</div>
+                {% endif %}
+              </span>
+              <div>
+                <h4>Dr. {{ doctor.name }}</h4>
+                <span>{{ doctor.specialization }}</span>
+              </div>
+            </div>
+            <div class="summary-row"><span class="k">Department</span><span class="v">{{ doctor.department.name }}</span></div>
+            <div class="summary-row"><span class="k">Room</span><span class="v">{{ doctor.room_no or 'To be assigned' }}</span></div>
+            <div class="summary-row"><span class="k">Date</span><span class="v">{{ selected_date|date_label }}</span></div>
+            <div class="summary-row"><span class="k">Time</span><span class="v" id="selectedTime">Not selected</span></div>
+            <div class="summary-row"><span class="k">Fee</span><span class="v">₹{{ '%.0f'|format(doctor.consultation_fee) }}</span></div>
+
+            <div class="mt-3 p-3 rounded-4 fs-13 text-muted-2" style="background:var(--blue-50);">
+              <i class="fa-solid fa-circle-info me-1 text-blue"></i>Waiting time and your queue position will be shown on the confirmation page.
+            </div>
+
+            <button class="btn btn-primary w-100 mt-3" type="submit" id="confirmBooking" disabled>
+              <i class="fa-solid fa-lock me-1"></i>Confirm booking
+            </button>
+            <div class="fs-13 text-muted-2 text-center mt-2">Slot <span id="selectedSlotText">not selected</span></div>
+          </div>
+        </div>
+
+        <div class="card-custom mt-3 card-pad">
+          <div class="d-flex gap-2 fs-13 text-muted-2">
+            <i class="fa-solid fa-shield-heart text-green mt-1"></i>
+            <div><strong class="text-ink d-block">Fair booking guarantee</strong>Only one patient can hold this doctor's slot for the selected date and time. If another patient books first, you will be asked to choose another slot.</div>
+          </div>
+        </div>
+
+        <div class="card-custom mt-3 card-pad">
+          <div class="meta-label mb-2">Cancellation policy</div>
+          <p class="fs-13 text-muted-2 mb-0">Cancel up to {{ config.CANCELLATION_CUTOFF_HOURS }} hours before your appointment. Cancelled future slots reopen automatically for other patients.</p>
+        </div>
+      </aside>
+    </div>
+  </form>
+{% endblock %}

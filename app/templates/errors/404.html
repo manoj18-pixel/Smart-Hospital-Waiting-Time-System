@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Page not found — MediQueue{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-7 text-center">
+        <div class="stat-icon blue mx-auto" style="width:88px;height:88px;font-size:2rem;border-radius:26px;"><i class="fa-solid fa-map-location-dot"></i></div>
+        <div class="display-4 fw-700 mt-3" style="font-family:var(--font-head);color:var(--ink-900);">404</div>
+        <h1 class="h3 mt-2">We could not find that page</h1>
+        <p class="text-muted-2 mx-auto max-620">The link may be broken or the page may have moved. Your appointments are safe — head back to your dashboard or the home page.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+          <a class="btn btn-primary" href="{{ url_for('main.index') }}"><i class="fa-solid fa-house me-2"></i>Home</a>
+          {% if current_user.is_authenticated %}
+            <a class="btn btn-outline-primary" href="{{ url_for('patient.dashboard') if current_user.role == 'patient' else (url_for('doctor.dashboard') if current_user.role == 'doctor' else url_for('admin.dashboard')) }}">My dashboard</a>
+          {% else %}
+            <a class="btn btn-outline-primary" href="{{ url_for('auth.login') }}">Sign in</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block footer %}{% endblock %}
