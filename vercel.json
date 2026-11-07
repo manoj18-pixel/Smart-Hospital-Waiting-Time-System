@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
   "functions": {
     "api/index.py": {
-      "includeFiles": ["app/**", "seed.py"],
+      "includeFiles": "{app/**,seed.py}",
       "maxDuration": 30
     }
   },
