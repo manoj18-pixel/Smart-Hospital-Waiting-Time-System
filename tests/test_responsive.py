@@ -17,10 +17,15 @@ def test_public_pages_declare_viewport_and_frontend_assets(client):
     body = response.data
     assert b'name="viewport"' in body
     assert b"width=device-width" in body
-    assert b"bootstrap@5.3.3" in body
-    assert b"font-awesome" in body
+    assert b"vendor/bootstrap/css/bootstrap.min.css" in body
+    assert b"vendor/fontawesome/css/all.min.css" in body
+    assert b"vendor/fonts/fonts.css" in body
     assert b"theme.css" in body
     assert b"responsive.css" in body
+    # Assets must be self-hosted so the UI also works on restricted networks.
+    assert b"https://cdn." not in body
+    assert b"fonts.googleapis.com" not in body
+    assert b"fonts.gstatic.com" not in body
 
 
 def test_responsive_stylesheet_defines_all_breakpoints():
@@ -93,6 +98,14 @@ def test_static_assets_are_served(client):
         "/static/css/responsive.css",
         "/static/js/app.js",
         "/static/img/logo.svg",
+        "/static/vendor/bootstrap/css/bootstrap.min.css",
+        "/static/vendor/bootstrap/js/bootstrap.bundle.min.js",
+        "/static/vendor/fontawesome/css/all.min.css",
+        "/static/vendor/fontawesome/webfonts/fa-solid-900.woff2",
+        "/static/vendor/fonts/fonts.css",
+        "/static/vendor/fonts/inter-400.woff2",
+        "/static/vendor/chartjs/chart.umd.min.js",
+        "/static/img/photos/hero-corridor.jpg",
     ):
         response = client.get(path)
         assert response.status_code == 200, path

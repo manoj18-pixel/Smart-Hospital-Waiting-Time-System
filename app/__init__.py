@@ -8,6 +8,7 @@ import click
 from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .config import config_by_name
 from .constants import AppointmentStatus, SlotStatus
@@ -44,6 +45,40 @@ def _sqlite_pragmas(dbapi_connection, _connection_record):
         cursor.close()
 
 
+def _env_flag(name, default=False):
+    """Read a boolean environment flag (1/true/yes/on)."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _bootstrap_database(app):
+    """Create the schema (and demo data) on a fresh serverless database.
+
+    Vercel starts with an empty managed database; without this the first
+    request would fail with ``relation "departments" does not exist``.
+    """
+    from .constants import DEFAULT_SETTINGS
+    from .models.setting import Setting
+    from .models.user import User
+
+    with app.app_context():
+        db.create_all()
+        for key, value in DEFAULT_SETTINGS.items():
+            if Setting.get(key) is None:
+                Setting.set(key, value)
+        db.session.commit()
+
+        # Demo data is only inserted when the admin account is missing, so this
+        # is a one-time cost. Set AUTO_SEED_DEMO=false for a clean database.
+        if _env_flag("AUTO_SEED_DEMO", default=True):
+            if User.query.filter_by(email="admin@mediqueue.local").first() is None:
+                from seed import seed_database
+
+                seed_database(app)
+
+
 def create_app(config_name=None, overrides=None):
     config_name = config_name or os.getenv("FLASK_CONFIG", "development")
 
@@ -69,6 +104,12 @@ def create_app(config_name=None, overrides=None):
     if overrides:
         app.config.update(overrides)
 
+    # Vercel (and every other reverse proxy) terminates TLS before the request
+    # reaches Flask, so trust exactly one hop of X-Forwarded-* headers. Without
+    # this, secure cookies and generated URLs would look like plain HTTP.
+    if config_name == "production":
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
     try:
         os.makedirs(app.instance_path, exist_ok=True)
     except OSError:
@@ -81,6 +122,16 @@ def create_app(config_name=None, overrides=None):
         connect_args = dict(engine_options.get("connect_args") or {})
         connect_args.setdefault("timeout", 15)
         engine_options["connect_args"] = connect_args
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = engine_options
+    else:
+        # Managed databases (Neon, Aiven, ...) close idle serverless
+        # connections. Check before use and keep a tiny per-instance pool.
+        engine_options = dict(app.config.get("SQLALCHEMY_ENGINE_OPTIONS") or {})
+        engine_options.setdefault("pool_pre_ping", True)
+        engine_options.setdefault("pool_recycle", 280)
+        if os.getenv("VERCEL"):
+            engine_options.setdefault("pool_size", 1)
+            engine_options.setdefault("max_overflow", 0)
         app.config["SQLALCHEMY_ENGINE_OPTIONS"] = engine_options
 
     db.init_app(app)
@@ -174,5 +225,10 @@ def create_app(config_name=None, overrides=None):
     @app.shell_context_processor
     def shell_context():
         return {"db": db}
+
+    if config_name == "production" and _env_flag(
+        "AUTO_INIT_DB", default=bool(os.getenv("VERCEL"))
+    ):
+        _bootstrap_database(app)
 
     return app

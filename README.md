@@ -151,8 +151,10 @@ or [Aiven](https://aiven.io) (MySQL), then:
    | `DATABASE_URL` | `postgresql://user:password@host/db?sslmode=require` or `mysql+pymysql://user:password@host/db` |
    | `MAIL_SUPPRESS_SEND` | `true` (or configure real SMTP credentials) |
 
-4. Before the first request, create the tables and demo data **against the
-   hosted database** from your machine:
+4. Deploy. On the first request the app creates the schema and loads the demo
+   data automatically when `VERCEL=1` is present (Vercel adds it for you), so
+   no terminal step is required. To do it manually — or to use a different
+   database — run this from your machine instead:
 
    ```powershell
    $env:SECRET_KEY = "any-temporary-value"
@@ -163,7 +165,7 @@ or [Aiven](https://aiven.io) (MySQL), then:
    .\.venv\Scripts\python.exe -m flask --app run.py seed
    ```
 
-5. Deploy. Vercel gives you a URL such as
+5. Open the URL Vercel gives you, such as
    `https://smart-hospital-waiting-time-system.vercel.app`.
 
 Notes:
@@ -173,6 +175,13 @@ Notes:
 - The app refuses to boot in production without `SECRET_KEY` and
   `DATABASE_URL`, so misconfiguration fails fast instead of silently falling
   back to SQLite.
+- `AUTO_INIT_DB` (default `true` on Vercel) creates missing tables and default
+  settings. `AUTO_SEED_DEMO` (default `true` on Vercel) inserts the demo
+  hospital once, when the admin account does not exist. Set either to `false`
+  for a clean production database.
+- Bootstrap, Font Awesome, Chart.js, Inter/Poppins and the photos are served
+  from `app/static/vendor` and `app/static/img`, so the UI works on networks
+  that block Google Fonts or public CDNs.
 - Demo credentials are the same as below; change the passwords before using a
   public deployment.
 

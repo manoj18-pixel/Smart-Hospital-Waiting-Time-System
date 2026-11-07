@@ -6,7 +6,7 @@
 {% block content %}
 <div class="auth-page">
   <div class="auth-visual">
-    <img src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=1200&q=80" alt="Doctor talking with a patient in a bright clinic" onerror="this.style.display='none'">
+    <img src="{{ url_for('static', filename='img/photos/login-doctor.jpg') }}" alt="Doctor talking with a patient in a bright clinic">
     <div class="auth-visual-content">
       <span class="eyebrow" style="background:rgba(255,255,255,.16);color:#fff;width:max-content;"><i class="fa-solid fa-heart-pulse"></i> MediQueue care</span>
       <h2 class="mt-3">Your appointment,<br>confirmed in seconds.</h2>
